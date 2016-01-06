@@ -1,6 +1,6 @@
 from centaur.datatypes import def_datatype, fulfill, TypeMismatchError, \
     InvalidIntegerValue, InvalidDataTypeDefinition, InvalidValueError, ValidationError, \
-    datatype_from_dict
+    datatype_from_dict, module_from_dict, load_datatypes, validate_before_call
 
 import pytest
 
@@ -8,6 +8,7 @@ import pytest
 string_dt = def_datatype(type_="string")
 number_dt = def_datatype(type_="number")
 integer_dt = def_datatype(type_="integer")
+url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
 
 def test_invalid_datatype_definitions():
@@ -94,6 +95,13 @@ def test_string_length():
     assert fulfill("a" * 20, string_20)
     with pytest.raises(InvalidValueError):
         fulfill("a" * 19, string_20)
+
+
+def test_string_regex():
+    url_dt = def_datatype(type_="string", regex=url_regex)
+    assert fulfill("https://example.com", url_dt)
+    with pytest.raises(InvalidValueError):
+        fulfill("ftp://example.com", url_dt)
 
 
 def test_list_relations():
@@ -187,3 +195,70 @@ def test_dict_datatype_with_fields():
     for bad_sample in bad_sample_datas:
         with pytest.raises(ValidationError):
             fulfill(bad_sample, dict_dt)
+
+
+def test_module_from_dict():
+    module_dict = {
+        "name": "sample-module",
+        "description": "Sample Module for Testing",
+        "datatypes": {
+            "sample1": {"type": "number", "gt": 0},
+            "sample2": {"type": "string", "length_max": 255},
+        }
+    }
+    m = module_from_dict(module_dict)
+    assert m.name == "sample-module"
+
+    sample1_dt = m.get_datatype("sample1")
+    assert fulfill(1, sample1_dt) is True
+    s1_dt, s2_dt = m.get_datatypes(["sample1", "sample2"])
+
+    assert s1_dt is not None and s2_dt is not None
+    assert fulfill(1, s1_dt) and fulfill("aaa", s2_dt)
+
+
+def test_load_datatypes():
+    m1_dict = {
+        "name": "sample1-module",
+        "description": "Sample Module for Testing",
+        "datatypes": {
+            "sampleSame": {"type": "number", "gt": 0},
+            "sample1": {"type": "string", "length_max": 128},
+        }
+    }
+    m2_dict = {
+        "name": "sample2-module",
+        "description": "Sample Module for Testing",
+        "datatypes": {
+            "sampleSame": {"type": "integer", "gt": 1},
+            "sample2": {"type": "list", "length_max": 256},
+        }
+    }
+    ctx = load_datatypes([m1_dict, m2_dict])
+    assert ctx.get_datatype("sample1").type_ == "string"
+    assert ctx.get_datatype("sample2").type_ == "list"
+    with pytest.raises(KeyError):
+        ctx.get_datatype("sample3")
+
+    ss1, ss2, ss3 = ctx.get_datatypes(["sample1-module:sampleSame", "sample2-module:sampleSame", "sampleSame"])
+    assert ss1.type_ == "number"
+    assert ss2.type_ == "integer"
+    assert ss1 == ss3
+    assert ss1 != ss2
+
+
+# def test_validate_before_call():
+#     ctx = load_datatypes([{
+#         "name": "sample",
+#         "description": "Sample Module for Testing",
+#         "datatypes": {
+#             "url": {"type": "string", "regex": url_regex},
+#         }}])
+
+#     @validate_before_call(ctx)
+#     def _test_fn(url: "sample:url"):
+#         return "valid url:{0}".format(url)
+
+#     assert _test_fn("http://example.com") == "valid url:http://example.com"
+#     with pytest.raises(ValidationError):
+#         _test_fn("s,djkdjfkdjsdkjfksdjf")
