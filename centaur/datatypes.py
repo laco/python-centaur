@@ -1,5 +1,6 @@
 import re
 import functools
+import inspect
 
 
 class Types(object):
@@ -97,11 +98,47 @@ def fulfill(value, datatype, _catch_exceptions=False):
 
 
 def validate_before_call(param, *args):
-    _ctx, _args = None, None
+    _ctx, _args = _create_default_ctx(), None
+
+    def _add_default_param_values(ba, sig):
+        for param in sig.parameters.values():
+            if param.name not in ba.arguments:
+                ba.arguments[param.name] = param.default
+        return ba
+
+    def _param_is_not_empty(p):
+        return p.annotation is not inspect._empty
+
+    def _param_is_not_default(p, ba):
+        return ba.arguments[p.name] != p.default
+
+    def _datatype_from_annotation(p):
+        if isinstance(p.annotation, (_Datatype, dict)):
+            return _create_dt_if_not_dt(p.annotation)
+        else:
+            return _ctx.get_datatype(p.annotation)
+
+    def _not_default_params_with_validation(sig, ba):
+        for param in sig.parameters.values():
+            if _param_is_not_empty(param) and _param_is_not_default(param, ba):
+                dt_from_annotation = _datatype_from_annotation(param)
+                if dt_from_annotation is not None:
+                    yield param, dt_from_annotation
+
+    def _validate_fn_params_by_annotations(fn, *args, **kwargs):
+        sig = inspect.signature(fn)
+        bound_arguments = _add_default_param_values(sig.bind(*args, **kwargs), sig)
+        validation_results = [
+            fulfill(
+                bound_arguments.arguments[param.name],
+                datatype_)
+            for param, datatype_ in _not_default_params_with_validation(sig, bound_arguments)]
+        return validation_results
 
     def _decorator(fn):
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
+            _validate_fn_params_by_annotations(fn, *args, **kwargs)
             result = fn(*args, **kwargs)
             return result
         return wrapper
@@ -258,3 +295,59 @@ class _Context(object):
 
     def get_datatypes(self, datatype_names):
         return [self.get_datatype(dtn) for dtn in datatype_names or []]
+
+
+def _email_regex():
+    # email regex rules
+    WSP = r'[ \t]'                                       # see 2.2.2. Structured Header Field Bodies
+    CRLF = r'(?:\r\n)'                                   # see 2.2.3. Long Header Fields
+    NO_WS_CTL = r'\x01-\x08\x0b\x0c\x0f-\x1f\x7f'        # see 3.2.1. Primitive Tokens
+    QUOTED_PAIR = r'(?:\\.)'                             # see 3.2.2. Quoted characters
+    FWS = r'(?:(?:' + WSP + r'*' + CRLF + r')?' + \
+        WSP + r'+)'                                    # see 3.2.3. Folding white space and comments
+    CTEXT = r'[' + NO_WS_CTL + \
+        r'\x21-\x27\x2a-\x5b\x5d-\x7e]'              # see 3.2.3
+    CCONTENT = r'(?:' + CTEXT + r'|' + \
+        QUOTED_PAIR + r')'                        # see 3.2.3 (NB: The RFC includes COMMENT here
+    # as well, but that would be circular.)
+    COMMENT = r'\((?:' + FWS + r'?' + CCONTENT + \
+              r')*' + FWS + r'?\)'                       # see 3.2.3
+    CFWS = r'(?:' + FWS + r'?' + COMMENT + ')*(?:' + \
+           FWS + '?' + COMMENT + '|' + FWS + ')'         # see 3.2.3
+    ATEXT = r'[\w!#$%&\'\*\+\-/=\?\^`\{\|\}~]'            # see 3.2.4. Atom
+    # ATOM = CFWS + r'?' + ATEXT + r'+' + CFWS + r'?'       # see 3.2.4
+    DOT_ATOM_TEXT = ATEXT + r'+(?:\.' + ATEXT + r'+)*'    # see 3.2.4
+    DOT_ATOM = CFWS + r'?' + DOT_ATOM_TEXT + CFWS + r'?'  # see 3.2.4
+    QTEXT = r'[' + NO_WS_CTL + \
+        r'\x21\x23-\x5b\x5d-\x7e]'                   # see 3.2.5. Quoted strings
+    QCONTENT = r'(?:' + QTEXT + r'|' + \
+               QUOTED_PAIR + r')'                        # see 3.2.5
+    QUOTED_STRING = CFWS + r'?' + r'"(?:' + FWS + \
+        r'?' + QCONTENT + r')*' + FWS + \
+        r'?' + r'"' + CFWS + r'?'
+    LOCAL_PART = r'(?:' + DOT_ATOM + r'|' + \
+                 QUOTED_STRING + r')'                    # see 3.4.1. Addr-spec specification
+    DTEXT = r'[' + NO_WS_CTL + r'\x21-\x5a\x5e-\x7e]'    # see 3.4.1
+    DCONTENT = r'(?:' + DTEXT + r'|' + \
+               QUOTED_PAIR + r')'                        # see 3.4.1
+    DOMAIN_LITERAL = CFWS + r'?' + r'\[' + \
+        r'(?:' + FWS + r'?' + DCONTENT + \
+        r')*' + FWS + r'?\]' + CFWS + r'?'  # see 3.4.1
+    DOMAIN = r'(?:' + DOT_ATOM + r'|' + \
+        DOMAIN_LITERAL + r')'                       # see 3.4.1
+    ADDR_SPEC = LOCAL_PART + r'@' + DOMAIN               # see 3.4.1
+    VALID_ADDRESS_REGEXP = re.compile('^' + ADDR_SPEC + '$')
+    return VALID_ADDRESS_REGEXP
+
+
+def _create_default_ctx():
+    ctx_ = load_datatypes([{
+        'name': 'commons',
+        'ns': 'centaur',
+        'datatypes': {
+            'email': {'type': Types.STRING, 'regex': _email_regex()}
+        }}])
+    return ctx_
+
+
+default_ctx = _create_default_ctx()

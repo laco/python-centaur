@@ -1,6 +1,6 @@
 from centaur.datatypes import def_datatype, fulfill, TypeMismatchError, \
     InvalidIntegerValue, InvalidDataTypeDefinition, InvalidValueError, ValidationError, \
-    datatype_from_dict, module_from_dict, load_datatypes, validate_before_call
+    datatype_from_dict, module_from_dict, load_datatypes, validate_before_call, default_ctx
 
 import pytest
 
@@ -247,18 +247,25 @@ def test_load_datatypes():
     assert ss1 != ss2
 
 
-# def test_validate_before_call():
-#     ctx = load_datatypes([{
-#         "name": "sample",
-#         "description": "Sample Module for Testing",
-#         "datatypes": {
-#             "url": {"type": "string", "regex": url_regex},
-#         }}])
+def test_default_ctx():
+    email_dt = default_ctx.get_datatype("email")
+    assert fulfill("example.user+12@example.com", email_dt) is True
+    with pytest.raises(InvalidValueError):
+        fulfill("@example", email_dt)
 
-#     @validate_before_call(ctx)
-#     def _test_fn(url: "sample:url"):
-#         return "valid url:{0}".format(url)
 
-#     assert _test_fn("http://example.com") == "valid url:http://example.com"
-#     with pytest.raises(ValidationError):
-#         _test_fn("s,djkdjfkdjsdkjfksdjf")
+def test_validate_before_call():
+    ctx = load_datatypes([{
+        "name": "sample",
+        "description": "Sample Module for Testing",
+        "datatypes": {
+            "url": {"type": "string", "regex": url_regex},
+        }}])
+
+    @validate_before_call(ctx)
+    def _test_fn(url: "sample:url"):
+        return "valid url:{0}".format(url)
+
+    assert _test_fn("http://example.com") == "valid url:http://example.com"
+    with pytest.raises(ValidationError):
+        _test_fn("s,djkdjfkdjsdkjfksdjf")
