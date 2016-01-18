@@ -3,7 +3,6 @@ import inspect
 
 from .defaults import _create_default_ctx
 from .classes import _Datatype
-from .functions import fulfill
 
 
 def validate_before_call(param, *args):
@@ -38,9 +37,8 @@ def validate_before_call(param, *args):
         sig = inspect.signature(fn)
         bound_arguments = _add_default_param_values(sig.bind(*args, **kwargs), sig)
         validation_results = [
-            fulfill(
-                bound_arguments.arguments[param.name],
-                datatype_)
+            datatype_.fulfill(
+                bound_arguments.arguments[param.name])
             for param, datatype_ in _not_default_params_with_validation(sig, bound_arguments)]
         return validation_results
 
