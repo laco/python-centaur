@@ -11,6 +11,10 @@ def _allowed_arguments_for(type_):
         return [Rels.LENGTH, Rels.LENGTH_MIN, Rels.LENGTH_MAX, Rels.ITEMS]
     elif type_ in [Types.DICT]:
         return [Rels.FIELDS]
+    elif type_ in [Types.UNION]:
+        return [Rels.TYPES]
+    elif type_ in [Types.MAYBE]:
+        return [Rels.BASE]
 
 
 class _Datatype(object):

@@ -1,9 +1,14 @@
 class Types(object):
+    NONE = "none"
     STRING = "string"
     INTEGER = "integer"
     NUMBER = "number"
     LIST = "list"
     DICT = "dict"
+    UNION = "union"
+    MAYBE = "maybe"
+
+    simple_datatypes = [NONE, STRING, INTEGER, NUMBER, LIST, DICT, UNION, MAYBE]
 
 
 class Rels(object):
@@ -21,3 +26,6 @@ class Rels(object):
 
     ITEMS = 'items'
     FIELDS = 'fields'
+
+    TYPES = 'types'
+    BASE = 'base'

@@ -11,6 +11,13 @@ integer_dt = def_datatype(type_="integer")
 url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
 
+def test_none_datatype():
+    none_dt = def_datatype(type_="none")
+    assert fulfill(None, none_dt)
+    with pytest.raises(TypeMismatchError):
+        fulfill('', none_dt)
+
+
 def test_invalid_datatype_definitions():
     with pytest.raises(InvalidDataTypeDefinition):
         def_datatype(type_="string", gt="invalid_value")
@@ -134,7 +141,7 @@ def test_datatype_from_dict():
 
 def test_catch_exception_on_fulfill():
     sample2_dt = datatype_from_dict({'type': 'integer', 'lt': 100, 'gte': 0})
-    result = fulfill(100, sample2_dt, _catch_exceptions=True)
+    result = fulfill(100, sample2_dt, _throw_exception=False)
     assert isinstance(result, Exception)
 
 
@@ -197,6 +204,33 @@ def test_dict_datatype_with_fields():
             fulfill(bad_sample, dict_dt)
 
 
+def test_union_datatypes_integer_or_string():
+    union_dt = def_datatype(type_='union', types=[
+        def_datatype(type_='string', length_min=3), def_datatype(type_='integer', gt=3)
+    ])
+    assert fulfill('string is ok', union_dt)
+    assert fulfill(12345, union_dt)
+    assert fulfill(4, union_dt)
+    assert fulfill('aaa', union_dt)
+
+    with pytest.raises(TypeMismatchError):
+        fulfill(['list', 'is', 'not', 'ok'], union_dt)
+
+    with pytest.raises(InvalidValueError):
+        fulfill(3, union_dt)
+
+    with pytest.raises(InvalidValueError):
+        fulfill('aa', union_dt)
+
+
+def test_maybe_datatypes():
+    maybe_url_dt = def_datatype(type_='maybe', base=def_datatype(type_='string', regex=url_regex))
+    assert fulfill(None, maybe_url_dt)
+    assert fulfill('http://example.com/', maybe_url_dt)
+    with pytest.raises(InvalidValueError):
+        fulfill('xxxsd jdfhgdfhg ', maybe_url_dt)
+
+
 def test_module_from_dict():
     module_dict = {
         "name": "sample-module",
@@ -252,6 +286,19 @@ def test_default_ctx():
     assert fulfill("example.user+12@example.com", email_dt) is True
     with pytest.raises(InvalidValueError):
         fulfill("@example", email_dt)
+
+
+# def test_custom_type_definitions():
+#     m1_dict = {
+#         "name": "sample1-module",
+#         "description": "Sample Module for Testing",
+#         "datatypes": {
+#             "sampleSame": {"type": "number", "gt": 0},
+#             "sample1": {"type": "string", "length_max": 128},
+#             "sample2": {"type": "sample1", "length_min": 2},
+#         }
+#     }
+#     ctx = load_datatypes([m1_dict])
 
 
 def test_validate_before_call_w_datatypes_as_strings():

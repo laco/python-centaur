@@ -1,5 +1,6 @@
 class DatatypeError(Exception):
-    pass
+    def __bool__(self):
+        return False
 
 
 class ValidationError(DatatypeError):
