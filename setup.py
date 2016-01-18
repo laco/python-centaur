@@ -29,7 +29,7 @@ setup(
     author_email='mail@laszloandrasi.com',
     description='General Purpose Python3 Application Framework (Port-Adapter Architecture)',
     long_description=read_file('README.md') + '\n\n',
-    packages=['centaur', "centaur.contrib"],
+    packages=['centaur', "centaur.contrib", 'centaur.datatypes'],
     include_package_data=True,
     zip_safe=False,
     platforms='any',
