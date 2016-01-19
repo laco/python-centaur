@@ -166,6 +166,9 @@ class _Module(object):
     def get_datatypes(self, datatype_names):
         return [self.get_datatype(dtn) for dtn in datatype_names or []]
 
+    def as_ctx(self):
+        return _Context(module_list=[self])
+
     @classmethod
     def ensure_module(cls, m):
         if isinstance(m, _Module):
