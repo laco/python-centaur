@@ -6,6 +6,8 @@ from centaur.datatypes import validate_before_call
 def load_service(d):
     if isinstance(d, dict):
         return _Service.from_dict(d)
+    elif isinstance(d, str):
+        return _Service.from_file(d)
 
 
 def create_action_fn(name, action_def, dt_ctx, request_cls=None):

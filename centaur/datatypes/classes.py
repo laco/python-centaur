@@ -1,4 +1,6 @@
 import re
+import yaml
+
 from .commons import Types, Rels
 from .exceptions import InvalidDataTypeDefinition, InvalidModuleDefinition, InvalidValueError, TypeMismatchError, InvalidIntegerValue
 
@@ -184,6 +186,18 @@ class _Module(object):
         datatypes = d.get("datatypes", None)
         m = cls(name=name, datatypes=datatypes)
         return m
+
+    @classmethod
+    def from_file(cls, f):
+        with open(f, 'r') as content_file:
+            content = content_file.read()
+        if f.endswith('yml'):
+            return cls.from_yml(content)
+
+    @classmethod
+    def from_yml(cls, yml_content):
+        d = yaml.load(yml_content)
+        return cls.from_dict(d)
 
 
 class _Context(object):
