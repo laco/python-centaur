@@ -41,9 +41,9 @@ def test_def_service_returns_a_module():
     assert 'sample_action' in service.actions
 
 
-def test_load_service_from_file():
-    service = load_service(sample_service_yml_file)
-    assert service is not None
+# def test_load_service_from_file():
+#     service = load_service(sample_service_yml_file)
+#     assert service is not None
 
 
 def test_create_action_fn():
