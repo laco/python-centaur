@@ -1,5 +1,6 @@
 import os
 import datetime
+import pytest
 from centaur import datatypes as dt
 
 url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
@@ -27,25 +28,28 @@ def test_simple_datatype_definition():
 
     # True
     assert dt.fulfill('xxxx', string_dt)
+
     assert dt.fulfill([1], list_dt)
     assert dt.fulfill([1, 2], list_dt)
     assert dt.fulfill(None, none_dt)
     assert dt.fulfill(1.12, number_dt)
     assert dt.fulfill(10.0, integer_dt)
+    assert isinstance(dt.fulfill('xxxx', string_dt), dt._Result)
 
     # False
-    assert dt.fulfill('xxxxx', string_dt) is False
-    assert dt.fulfill([1, 2, 3], list_dt) is False
-    assert dt.fulfill([], list_dt) is False
-    assert dt.fulfill(False, none_dt) is False
-    assert dt.fulfill('113', number_dt) is False
-    assert dt.fulfill(10.1, integer_dt) is False
+    assert dt.fulfill('xxxxx', string_dt).failed
+    assert dt.fulfill([1, 2, 3], list_dt).failed
+    assert dt.fulfill([], list_dt).failed
+    assert dt.fulfill(False, none_dt).failed
+    assert dt.fulfill('113', number_dt).failed
+    assert dt.fulfill(10.1, integer_dt).failed
+    assert isinstance(dt.fulfill('xxxxx', string_dt), dt._Result)
 
 
 def test_integer_datatype_respect_floats():
-    assert dt.fulfill(1.0, integer_dt) is True
-    assert dt.fulfill(1.0, number_dt) is True
-    assert dt.fulfill(1.123, number_dt) is True
+    assert dt.fulfill(1.0, integer_dt)
+    assert dt.fulfill(1.0, number_dt)
+    assert dt.fulfill(1.123, number_dt)
 
     # with pytest.raises(InvalidIntegerValue):
     #     fulfill(1.123, integer_dt) is False
@@ -58,11 +62,11 @@ def test_number_relations():
     not_equal_20 = dt.def_datatype({'type': 'number', 'ne': 20})
     equal_20 = dt.def_datatype({'type': 'number', 'eq': 20})
 
-    assert dt.fulfill(21, greater_than_20) is True
+    assert dt.fulfill(21, greater_than_20)
 
-    assert dt.fulfill(19, less_than_20) is True
-    assert dt.fulfill(21, not_equal_20) is True
-    assert dt.fulfill(20, equal_20) is True
+    assert dt.fulfill(19, less_than_20)
+    assert dt.fulfill(21, not_equal_20)
+    assert dt.fulfill(20, equal_20)
 
     for i in range(20, 31):
         assert dt.fulfill(i, min_20_max_30)
@@ -104,9 +108,9 @@ def test_extended_datatype_definition():
     })
 
     assert dt.fulfill('s', dts['sample2'])
-    assert dt.fulfill(12, dts['sample2']) is False
+    assert not dt.fulfill(12, dts['sample2'])
     assert dt.fulfill('ss', dts['sample1'])
-    assert dt.fulfill('ss', dts['sample2']) is False
+    assert not dt.fulfill('ss', dts['sample2'])
 
 
 def test_list_of_lists_validation():
@@ -210,6 +214,22 @@ sample_module_def = {
 }
 
 
+def test_guard_throw_exception():
+    user_dt = dt.def_datatype({
+        'type': 'dict',
+        'fields': {
+            'email': {'type': 'string', 'length_min': 10},
+            'pw': {'type': 'string'},
+            'tags': {'type': 'list', 'items': {'type': 'string'}}
+        }})
+
+    assert dt.guard({'email': 'test@example.com', 'pw': '', 'tags': ['a']}, user_dt)
+    #with pytest.raises(dt.ValidationError):
+    try:
+        dt.guard({'email': 'xxxxx'}, user_dt)
+    except Exception as e:
+        print(e)
+
 def test_link_ctx():
     dts1 = dt.def_datatypes({
         'sample11': {'type': 'string', 'enum': ['ACB', 'BCA', 'ABC']},
@@ -223,6 +243,9 @@ def test_link_ctx():
 
     assert dt.fulfill('BCA', dts2['sample21'])
     assert dt.fulfill('ABC', dts2['sample22'])
+
+    assert not dt.fulfill('CBA', dts2['sample21'])
+    assert not dt.fulfill('ABCDE', dts2['sample22'])
 
 
 def test_load_module():

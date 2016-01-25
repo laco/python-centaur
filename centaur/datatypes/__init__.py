@@ -1,4 +1,5 @@
 from .context import _Context, _Module
+from .classes import _Result
 from .utils import select_items, with_items, without_items
 from .decorators import validate_before_call
 from .exceptions import ValidationError
@@ -24,9 +25,14 @@ def fulfill(value, datatype):
     return datatype.fulfill(value)
 
 
-__all__ = ['def_datatypes', 'def_datatype', 'load_module', 'fulfill',
+def guard(value, datatype):
+    return datatype.guard(value)
+
+
+__all__ = ['def_datatypes', 'def_datatype', 'load_module', 'fulfill', 'guard',
            'select_items', 'with_items', 'without_items',
-           '_Context', '_Module',
+           '_Context', '_Module', '_Result',
            'validate_before_call',
            'ValidationError',
+
            ]

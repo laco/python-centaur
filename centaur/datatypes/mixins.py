@@ -1,4 +1,5 @@
 import re
+from .results import _Result
 
 
 class LengthValidationMixin(object):
@@ -34,7 +35,7 @@ class ContainsValidationMixin(object):
 class ItemsValidationMixin(object):
     def validate_items(self, value, opt):
         item_dt = opt
-        return all([item_dt.fulfill(item) for item in value])
+        return _Result([item_dt.fulfill(item) for item in value], 'items', None, None)
 
 
 class FieldsValidationMixin(object):
@@ -42,7 +43,7 @@ class FieldsValidationMixin(object):
         def _validate_key(key, value):
             key_dt = opt[key]
             return key_dt.fulfill(value.get(key))
-        return all([_validate_key(key, value) for key in value])
+        return _Result([_validate_key(key, value) for key in value], 'fields', None, None)
 
     def validate_required(self, value, opt):
         for key in opt:
