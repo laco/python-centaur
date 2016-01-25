@@ -37,7 +37,7 @@ class HTTPBridge(BaseBridge):
                 kwargs['_data'] = await _request_data(request)
             print('++++', accepted_parameters, kwargs)
             res = await self._app.f_(fn_name, **kwargs)
-            return web.Response(text=str(res), content_type='text/html')
+            return web.Response(text=str(res))  # content_type='text/html'
         return _handler
 
     def run_server(self, host="0.0.0.0", port=8888):

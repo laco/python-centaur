@@ -1,5 +1,6 @@
 import re
 import yaml
+from collections import OrderedDict
 
 from .commons import Types, Rels
 from .exceptions import InvalidDataTypeDefinition, InvalidModuleDefinition, InvalidValueError, TypeMismatchError, InvalidIntegerValue
@@ -187,6 +188,8 @@ class _Module(object):
         m = cls(name=name, datatypes=datatypes)
         return m
 
+
+class YMLFileLoadMixin(object):
     @classmethod
     def from_file(cls, f):
         with open(f, 'r') as content_file:
@@ -201,8 +204,48 @@ class _Module(object):
 
 
 class _Context(object):
-    def __init__(self, module_list=None):
-        self.modules = [_Module.ensure_module(m) for m in module_list or []]
+    def __init__(self, module_list=None, scope=None):
+        # self.modules = [_Module.ensure_module(m) for m in module_list or []]
+        self.datatypes = OrderedDict()
+        self.scope = scope
+
+    def load_datatypes(self, module_list):
+        for m in module_list:
+            if isinstance(m, dict):
+                self.module_from_dict(m)
+            else:
+                pass  # FIXME
+        return self
+
+    def module_from_dict(self, module_dict):
+        ns, module_name = module_dict.get('ns', None), module_dict.get('name', None)
+        scope = ':'.join([e for e in [ns, module_name] if e is not None])
+        for dt_name, dt_dict in module_dict.get('datatypes', {}).items():
+            dt = self.datatype_from_dict(dt_dict)
+            self.add_datatype(dt, dt_name, scope)
+        return self
+
+    def datatype_from_dict(self, datatype_dict):
+        d_ = {k: v for k, v in datatype_dict.items() if k not in ['type', 'extends']}
+        type_ = datatype_dict.get('type', None)
+        extends_ = datatype_dict.get('extends', None)
+        return self.def_datatype(type_, extends_, **d_)
+
+    def def_datatype(self, type_=None, extends_=None,  **kwargs):
+        if type_ is not None and extends_ is None:
+            dt = _Datatype(type_=type_, **kwargs)
+        elif type_ is None and extends_ is not None:
+            base_dt = self.get_datatype(extends_)
+            dt = self.extend_datatype(base_dt, **kwargs)
+        else:
+            raise InvalidDataTypeDefinition("Plz. provide type_ xor extends_ for the type definition")
+        return dt
+
+    def extend_datatype(self, base_dt, **kwargs):
+        kw = {}
+        kw = merge_dicts(kw, base_dt.params)
+        kw = merge_dicts(kw, kwargs)
+        return self.def_datatype(type_=base_dt.type_, **kw)
 
     def _parse_datatype_name(self, datatype_name):
         n = datatype_name.split(":")
@@ -215,26 +258,37 @@ class _Context(object):
         else:
             raise KeyError("Bad key for datatype: {0}".format(datatype_name))
 
-    def _filter_modules(self, ns=None, mname=None):
-        def _check_ns(module_, ns):
-            return ns is None or ns == module_.ns
-
-        def _check_mname(module_, mname):
-            return mname is None or module_.name == mname
-
-        return [
-            m for m in self.modules
-            if _check_ns(m, ns) and _check_mname(m, mname)
-        ]
+    def add_datatype(self, dt, dt_name, scope=None):
+        full_name = scope + ':' + dt_name if scope is not None else dt_name
+        self.datatypes[full_name] = dt
+        return dt
 
     def get_datatype(self, datatype_name):
         ns, mname, dname = self._parse_datatype_name(datatype_name)
-        for m in self._filter_modules(ns, mname):
-            try:
-                return m.get_datatype(dname)
-            except KeyError:
-                continue
-        raise KeyError("Datatype {0} not found in context.".format(datatype_name))
+
+        candidates = [dt_name for dt_name in self.datatypes if dt_name.endswith(datatype_name)]
+        if len(candidates) == 0:
+            print(self.datatypes)
+            raise KeyError("Datatype {0} not found in context.".format(datatype_name))
+        else:
+            return self.datatypes[candidates[0]]
 
     def get_datatypes(self, datatype_names):
         return [self.get_datatype(dtn) for dtn in datatype_names or []]
+
+
+def merge_dicts(a, b, path=None):
+    "merges b into a"
+    if path is None:
+        path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                merge_dicts(a[key], b[key], path + [str(key)])
+            elif a[key] == b[key]:
+                pass  # same leaf value
+            else:
+                raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
+        else:
+            a[key] = b[key]
+    return a

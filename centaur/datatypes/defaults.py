@@ -1,6 +1,6 @@
 import re
 from .commons import Types
-from .functions import load_datatypes
+from .classes import _Context
 
 
 def _email_regex():
@@ -47,7 +47,9 @@ def _email_regex():
 
 
 def _create_default_ctx():
-    ctx_ = load_datatypes([{
+    ctx_ = _Context()
+
+    ctx_.load_datatypes([{
         'name': 'commons',
         'ns': 'centaur',
         'datatypes': {

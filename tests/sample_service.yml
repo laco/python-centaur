@@ -13,7 +13,7 @@ datatypes:
       author: {type: string}
       created_at: {type: string, format: isodatetime}
   postWithId:
-    extends: "centaur:sample-blog:post"
+    type: "post"
     fields:
       id: {type: integer}
   comment:
@@ -23,7 +23,7 @@ datatypes:
       email: {type: string, format: email}
       created_at: {type: string, format: isodatetime}
   commentWithId:
-    extends: comment
+    type: comment
     fields:
       id: {type: integer}
       post_id: {type: integer}
