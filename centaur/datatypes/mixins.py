@@ -2,6 +2,10 @@ import re
 
 
 class LengthValidationMixin(object):
+    msg_length = "{value} lenght is not {option_value}"
+    msg_length_min = "{value} length is not at least {option_value}"
+    msg_length_max = "{value} length is greater then {option_value}"
+
     def validate_length(self, value, opt):
         return len(value) == opt
 
@@ -34,14 +38,14 @@ class ContainsValidationMixin(object):
 class ItemsValidationMixin(object):
     def validate_items(self, value, opt):
         item_dt = opt
-        return all([item_dt.fulfill(item) for item in value])
+        return all([item_dt.guard(item) for item in value])
 
 
 class FieldsValidationMixin(object):
     def validate_fields(self, value, opt):
         def _validate_key(key, value):
             key_dt = opt[key]
-            return key_dt.fulfill(value.get(key))
+            return key_dt.guard(value.get(key))
         return all([_validate_key(key, value) for key in value])
 
     def validate_required(self, value, opt):

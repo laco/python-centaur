@@ -52,7 +52,7 @@ def validate_before_call(param, **kwargs):
         sig = inspect.signature(fn)
         bound_arguments = _add_default_param_values(sig.bind(*args, **kwargs), sig)
         validation_results = [
-            datatype_.fulfill(
+            datatype_.guard(
                 bound_arguments.arguments[param.name])
             for param, datatype_ in _not_default_params_with_validation(sig, bound_arguments)]
         return validation_results

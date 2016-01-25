@@ -24,7 +24,11 @@ def fulfill(value, datatype):
     return datatype.fulfill(value)
 
 
-__all__ = ['def_datatypes', 'def_datatype', 'load_module', 'fulfill',
+def guard(value, datatype):
+    return datatype.guard(value)
+
+
+__all__ = ['def_datatypes', 'def_datatype', 'load_module', 'fulfill', 'guard',
            'select_items', 'with_items', 'without_items',
            '_Context', '_Module',
            'validate_before_call',

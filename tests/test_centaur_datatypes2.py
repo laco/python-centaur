@@ -1,3 +1,4 @@
+import pytest
 import os
 import datetime
 from centaur import datatypes as dt
@@ -47,8 +48,8 @@ def test_integer_datatype_respect_floats():
     assert dt.fulfill(1.0, number_dt) is True
     assert dt.fulfill(1.123, number_dt) is True
 
-    # with pytest.raises(InvalidIntegerValue):
-    #     fulfill(1.123, integer_dt) is False
+    with pytest.raises(dt.ValidationError):
+        dt.guard(1.123, integer_dt) is False
 
 
 def test_number_relations():
@@ -67,17 +68,17 @@ def test_number_relations():
     for i in range(20, 31):
         assert dt.fulfill(i, min_20_max_30)
 
-    # with pytest.raises(InvalidValueError):
-    #     fulfill(20, greater_than_20)
+    with pytest.raises(dt.ValidationError):
+        dt.guard(20, greater_than_20)
 
-    # with pytest.raises(InvalidValueError):
-    #     fulfill(20, less_than_20)
+    with pytest.raises(dt.ValidationError):
+        dt.guard(20, less_than_20)
 
-    # with pytest.raises(InvalidValueError):
-    #     fulfill(20, not_equal_20)
+    with pytest.raises(dt.ValidationError):
+        dt.guard(20, not_equal_20)
 
-    # with pytest.raises(InvalidValueError):
-    #     fulfill(19, equal_20)
+    with pytest.raises(dt.ValidationError):
+        dt.guard(19, equal_20)
 
 
 def test_dict_datatype_simple():
@@ -233,3 +234,20 @@ def test_load_module():
     assert dt.fulfill('https://example.com/', m['centaur:url'])
     assert dt.fulfill(str(datetime.date.today()), m['centaur:date'])
     # assert dt.fulfill(str(datetime.datetime.now()), m['centaur:datetime'])  # FIXME
+
+
+def test_guard_throw_exception():
+    user_dt = dt.def_datatype({
+        'type': 'dict',
+        'fields': {
+            'email': {'type': 'string', 'length_min': 10},
+            'pw': {'type': 'string'},
+            'tags': {'type': 'list', 'items': {'type': 'string'}}
+        }})
+
+    assert dt.guard({'email': 'test@example.com', 'pw': '', 'tags': ['a']}, user_dt)
+    # with pytest.raises(dt.ValidationError):
+    try:
+        dt.guard({'email': 'xxxxx'}, user_dt)
+    except Exception as e:
+        print(e)

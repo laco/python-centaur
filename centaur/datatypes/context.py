@@ -3,6 +3,7 @@ from .utils import without_items
 from .classes import StringDatatype, NumberDataType, IntegerDataType, DictDataType, \
     ListDatatype, NoneDatatype, ExtendedDataType, UnionDatatype, MaybeDatatype
 from .defaults import _create_default_ctx
+from collections import defaultdict
 
 
 class _Types(object):
@@ -39,6 +40,8 @@ class _Context(YMLFileLoadMixin, object):
     def __init__(self):
         self._datatypes = {}
         self.linked_ctxs = {}
+        self._type_counter = defaultdict(int)
+        self.error_templates = {}
 
     @classmethod
     def create_empty(cls):
@@ -55,25 +58,27 @@ class _Context(YMLFileLoadMixin, object):
         return self
 
     def def_datatype(self, dt_definition, name=None):
+        name = name or self._gen_dt_name(dt_definition)
         type_ = dt_definition.get('type')
         type_cls_ = self.cls_for_type(type_)
         if type_ in PRIMITIVE_TYPES:
-            options = without_items(dt_definition, ['type'])
+            options = without_items(dt_definition, ['type', 'name'])
         elif type_ == _Types.list:
-            options = without_items(dt_definition, ['type', 'items'])
+            options = without_items(dt_definition, ['type', 'items', 'name'])
             if 'items' in dt_definition:
                 options['items'] = self.def_datatype(dt_definition['items'])
         elif type_ == _Types.dict:
-            options = without_items(dt_definition, ['type', 'fields'])
+            options = without_items(dt_definition, ['type', 'fields', 'name'])
             if 'fields' in dt_definition:
-                options['fields'] = {k: self.def_datatype(dt_definition['fields'][k]) for k, v in dt_definition['fields'].items()}
-
+                options['fields'] = {k: self.def_datatype(
+                    dt_definition['fields'][k],
+                    name="{}/{}".format(name, k)) for k, v in dt_definition['fields'].items()}
         elif type_ == _Types.union:
-            options = without_items(dt_definition, ['type', 'types'])
+            options = without_items(dt_definition, ['type', 'types', 'name'])
             if 'types' in dt_definition:
                 options['types'] = [self.def_datatype(d) for d in dt_definition['types']]
         elif type_ == _Types.maybe:
-            options = without_items(dt_definition, ['type', 'base'])
+            options = without_items(dt_definition, ['type', 'base', 'name'])
             if 'base' in dt_definition:
                 options['base'] = self.def_datatype(dt_definition['base'])
 
@@ -81,13 +86,21 @@ class _Context(YMLFileLoadMixin, object):
             # Keep all options for extended datatype
             options = without_items(dt_definition, [])
 
-        datatype = type_cls_(_ctx=self, options=options)
-        if name is not None:
-            self.add_datatype(name, datatype)
-        return datatype
+        datatype = type_cls_(_ctx=self, options=options, name=name)
+        return self.add_datatype(name, datatype)
+
+    def _gen_dt_name(self, dt_definition):
+        if 'name' in dt_definition:
+            return dt_definition['name']
+        else:
+            type_ = dt_definition.get('type')
+            typecounter = self._type_counter[type_]
+            self._type_counter[type_] = typecounter + 1
+            return '{}{}'.format(type_, typecounter)
 
     def add_datatype(self, name, datatype):
         self._datatypes[name] = datatype
+        return datatype
 
     def def_extended_datatype(self, dt_definition, name=None):
         type_ = dt_definition.get('type')

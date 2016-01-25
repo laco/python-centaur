@@ -16,10 +16,10 @@ def test_validate_before_call_w_datatypes_as_strings():
         return "valid url:{0}".format(url)
 
     assert _test_fn("http://example.com", 'A', None) == "valid url:http://example.com"
-    # with pytest.raises(ValidationError):
-    #     _test_fn("s,djkdjfkdjsdkjfksdjf", None)
-    # with pytest.raises(ValidationError):
-    #     _test_fn("http://example.com", None,  param_w_default=-1)
+    with pytest.raises(ValidationError):
+        _test_fn("s,djkdjfkdjsdkjfksdjf", None, '')
+    with pytest.raises(ValidationError):
+        _test_fn("http://example.com", None,  '1', param_w_default=-1)
 
 
 def test_validate_before_call_w_datatypes_as_dt():
@@ -36,16 +36,16 @@ def test_validate_before_call_w_datatypes_as_dt():
         return "valid url:{0}".format(url)
 
     assert _test_fn("http://example.com", None) == "valid url:http://example.com"
-    # with pytest.raises(ValidationError):
-    #     _test_fn("s,djkdjfkdjsdkjfksdjf", None)
-    # with pytest.raises(ValidationError):
-    #     _test_fn("http://example.com", None,  param_w_default=-1)
+    with pytest.raises(ValidationError):
+        _test_fn("s,djkdjfkdjsdkjfksdjf", None)
+    with pytest.raises(ValidationError):
+        _test_fn("http://example.com", None,  param_w_default=-1)
 
 
-# def test_validate_before_call_w_bad_datatype_name():
-#     @validate_before_call
-#     def _test_fn(email: "email2"):
-#         return "valid email:{0}".format(email)
+def test_validate_before_call_w_bad_datatype_name():
+    @validate_before_call
+    def _test_fn(email: "email2"):
+        return "valid email:{0}".format(email)
 
-#     with pytest.raises(KeyError):
-#         _test_fn("goodemail@example.com")
+    with pytest.raises(KeyError):
+        _test_fn("goodemail@example.com")

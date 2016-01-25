@@ -2,12 +2,14 @@ from .mixins import EnumValidationMixin, ContainsValidationMixin, LengthValidati
     EqualityValidationMixin, RegexValidationMixin, SortableValidationMixin, ItemsValidationMixin,\
     FieldsValidationMixin
 from .utils import without_items, deep_merge
+from .exceptions import ValidationError
 
 
 class _Datatype(object):
-    def __init__(self, options, _ctx):
+    def __init__(self, options, _ctx, name):
         self._options = options
         self._ctx = _ctx
+        self.name = name
 
     def get_options(self):
         return self._options
@@ -15,12 +17,37 @@ class _Datatype(object):
     def validate_type(self, value):
         return True
 
+    def get_exception_msg(self, option_name, option_value, value):
+        if option_name in self._ctx.error_templates:
+            template = self.ctx.error_templates[option_name]
+        elif hasattr(self, 'msg_' + option_name):
+            template = getattr(self, 'msg_' + option_name)
+        else:
+            template = "Value {value} is invalid for {datatype_name}. (Reason: {option_name} {option_value})"
+        return template.format(**{
+            'datatype_name': self.name,
+            'option_name': option_name,
+            'option_value': option_value,
+            'value': repr(value)})
+
     def fulfill(self, value, options=None):
+        try:
+            return self.guard(value, options=options)
+        except ValidationError:
+            return False
+
+    def guard(self, value, options=None):
         def _validate_option(value, option, opt):
             validate_fn = getattr(self, 'validate_{}'.format(option))
-            return validate_fn(value, opt)
+            if validate_fn(value, opt):
+                return True
+            else:
+                raise ValidationError(self.get_exception_msg(option_name=option, option_value=opt, value=value))
         options = options or self.get_options()
-        return self.validate_type(value) and all([_validate_option(value, option, options[option]) for option in options])
+        if self.validate_type(value):
+            return all([_validate_option(value, option, options[option]) for option in options])
+        else:
+            raise ValidationError("Invalid type for {}. Value: {}".format(self.__class__.__name__, repr(value)))
 
 
 class NoneDatatype(_Datatype):
@@ -40,7 +67,7 @@ class NumberDataType(EnumValidationMixin, SortableValidationMixin, EqualityValid
 
 class IntegerDataType(EnumValidationMixin, SortableValidationMixin, EqualityValidationMixin, _Datatype):
     def validate_type(self, value):
-        return isinstance(value, int) or (isinstance(value, float) and value.is_integer())
+        return (isinstance(value, int)) or (isinstance(value, float) and value.is_integer())
 
 
 class ListDatatype(ItemsValidationMixin, ContainsValidationMixin, LengthValidationMixin, _Datatype):
@@ -57,6 +84,10 @@ class ExtendedDataType(_Datatype):
     def fulfill(self, value, options=None):
         base_dt = self._ctx[self._options['type']]
         return base_dt.fulfill(value, options=without_items(options or self.get_options(), ['type']))
+
+    def guard(self, value, options=None):
+        base_dt = self._ctx[self._options['type']]
+        return base_dt.guard(value, options=without_items(options or self.get_options(), ['type']))
 
     def get_options(self):
         base_dt = self._ctx[self._options['type']]
