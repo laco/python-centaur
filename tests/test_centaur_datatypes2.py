@@ -222,3 +222,8 @@ def test_link_ctx():
 
     assert dt.fulfill('BCA', dts2['sample21'])
     assert dt.fulfill('ABC', dts2['sample22'])
+
+
+def test_load_module():
+    m = dt.load_module(sample_module_def)
+    assert m['sampleID'] is not None

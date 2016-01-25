@@ -1,4 +1,4 @@
-from centaur.datatypes.classes import _Module
+from centaur.datatypes.context import _Module
 from inspect import Signature, Parameter
 from centaur.datatypes import validate_before_call
 
