@@ -1,5 +1,4 @@
 import re
-from .context import _Types, _Context
 
 
 def _email_regex():
@@ -46,13 +45,18 @@ def _email_regex():
 
 
 def _create_default_ctx():
+    from .context import _Types, _Context  # beware of cycle-import!
+
     ctx_ = _Context.create_empty()
 
     ctx_.def_datatypes({
-        'email': {'type': _Types.string, 'regex': _email_regex()}
+        'email': {'type': _Types.string, 'regex': _email_regex()},
+        'url': {'type': _Types.string, 'regex': 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'},
+        'date': {'type': _Types.string, 'regex': '^(\d{4})\D?(0[1-9]|1[0-2])\D?([12]\d|0[1-9]|3[01])$'},
+        # 'datetime': {'type': _Types.string, 'regex': ''},
         })
     ctx_.link_ctx(ctx_, prefix='centaur')
     return ctx_
 
 
-default_ctx = _create_default_ctx()
+# default_ctx = _create_default_ctx()

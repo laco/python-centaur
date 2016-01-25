@@ -41,20 +41,20 @@ def test_def_service_returns_a_module():
     assert 'sample_action' in service.actions
 
 
-# def test_load_service_from_file():
-#     service = load_service(sample_service_yml_file)
-#     assert service is not None
+def test_load_service_from_file():
+    service = load_service(sample_service_yml_file)
+    assert service is not None
 
 
-# def test_create_action_fn():
-#     service = load_service(sample_service_def)
-#     action_def = sample_service_def['interface']['sample_action']
+def test_create_action_fn():
+    service = load_service(sample_service_def)
+    action_def = sample_service_def['interface']['sample_action']
 
-#     action_fn = create_action_fn('sample_action', action_def, dt_ctx=service.as_ctx())
-#     action_fn_sig = signature(action_fn)
+    action_fn = create_action_fn('sample_action', action_def, dt_ctx=service.ctx)
+    action_fn_sig = signature(action_fn)
 
-#     assert(action_fn) is not None
-#     assert 'id' in action_fn_sig.parameters
+    assert(action_fn) is not None
+    assert 'id' in action_fn_sig.parameters
 #     with pytest.raises(ValidationError):
 #         action_fn('aaa')
 

@@ -1,4 +1,5 @@
 import os
+import datetime
 from centaur import datatypes as dt
 
 url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
@@ -227,3 +228,8 @@ def test_link_ctx():
 def test_load_module():
     m = dt.load_module(sample_module_def)
     assert m['sampleID'] is not None
+
+    assert dt.fulfill('mail@example.com', m['centaur:email'])
+    assert dt.fulfill('https://example.com/', m['centaur:url'])
+    assert dt.fulfill(str(datetime.date.today()), m['centaur:date'])
+    # assert dt.fulfill(str(datetime.datetime.now()), m['centaur:datetime'])  # FIXME

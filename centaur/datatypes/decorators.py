@@ -3,10 +3,11 @@ import inspect
 
 from .defaults import _create_default_ctx
 from .classes import _Datatype
+from .context import _Module, _Context
 
 
-def validate_before_call(param, *args):
-    _ctx, _args = _create_default_ctx(), None
+def validate_before_call(param, **kwargs):
+    _ctx, _kwargs = _create_default_ctx(), {}
 
     def _add_default_param_values(ba, sig):
         for param in sig.parameters.values():
@@ -28,12 +29,24 @@ def validate_before_call(param, *args):
         else:
             return _ctx[p.annotation]
 
+    def _datatype_from_kwargs(p):
+        if isinstance(_kwargs[p], _Datatype):
+            return _kwargs[p]
+        elif isinstance(_kwargs[p], dict):
+            return _ctx.def_datatype(_kwargs[p])
+        else:
+            return _ctx[_kwargs[p]]
+
     def _not_default_params_with_validation(sig, ba):
         for param in sig.parameters.values():
             if _param_is_not_empty(param) and _param_is_not_default(param, ba):
                 dt_from_annotation = _datatype_from_annotation(param)
                 if dt_from_annotation is not None:
                     yield param, dt_from_annotation
+            elif param in _kwargs and _param_is_not_default(param, ba):
+                dt_from_kwargs = _datatype_from_kwargs(param)
+                if dt_from_kwargs is not None:
+                    yield param, dt_from_kwargs
 
     def _validate_fn_params_by_annotations(fn, *args, **kwargs):
         sig = inspect.signature(fn)
@@ -54,5 +67,8 @@ def validate_before_call(param, *args):
     if callable(param):
         return _decorator(param)
     else:
-        _ctx, _args = param, args  # noqa
+        if isinstance(param, _Module):
+            _ctx, _kwargs = param.ctx, kwargs  # noqa
+        elif isinstance(param, _Context):
+            _ctx, _kwargs = param, kwargs
         return _decorator

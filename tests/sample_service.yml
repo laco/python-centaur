@@ -29,7 +29,7 @@ datatypes:
       post_id: {type: integer}
   commentList:
     type: list
-    items: commentWithId
+    items: {type: commentWithId}
 
 interface:
   create_post:

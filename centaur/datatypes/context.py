@@ -1,6 +1,8 @@
+import yaml
 from .utils import without_items
 from .classes import StringDatatype, NumberDataType, IntegerDataType, DictDataType, \
     ListDatatype, NoneDatatype, ExtendedDataType, UnionDatatype, MaybeDatatype
+from .defaults import _create_default_ctx
 
 
 class _Types(object):
@@ -19,7 +21,21 @@ PRIMITIVE_TYPES = [_Types.string, _Types.none, _Types.number, _Types.integer]
 COMPOSITION_TYPES = [_Types.list, _Types.dict, _Types.union, _Types.maybe]
 
 
-class _Context(object):
+class YMLFileLoadMixin(object):
+    @classmethod
+    def from_file(cls, f):
+        with open(f, 'r') as content_file:
+            content = content_file.read()
+        if f.endswith('yml'):
+            return cls.from_yml(content)
+
+    @classmethod
+    def from_yml(cls, yml_content):
+        d = yaml.load(yml_content)
+        return cls.from_dict(d)
+
+
+class _Context(YMLFileLoadMixin, object):
     def __init__(self):
         self._datatypes = {}
         self.linked_ctxs = {}
@@ -27,6 +43,11 @@ class _Context(object):
     @classmethod
     def create_empty(cls):
         return cls()
+
+    @classmethod
+    def from_dict(cls, d):
+        ctx = cls()
+        return ctx.def_datatypes(d)
 
     def def_datatypes(self, dt_definitions):
         for k, v in dt_definitions.items():
@@ -107,7 +128,7 @@ class _Context(object):
             return ExtendedDataType
 
 
-class _Module(object):
+class _Module(YMLFileLoadMixin, object):
     def __init__(self, name, ns, ctx):
         self.name = name
         self.ns = ns
@@ -118,8 +139,8 @@ class _Module(object):
         name = d.get('name')
         ns = d.get('ns', None)
         datatypes = d.get('datatypes')
-        ctx = _Context.create_empty()
-        ctx = ctx.def_datatypes(datatypes)
+        ctx = _Context.from_dict(datatypes)
+        ctx.link_ctx(_create_default_ctx(), prefix='centaur')
         return cls(name=name, ns=ns, ctx=ctx)
 
     def items(self):
