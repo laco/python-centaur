@@ -18,6 +18,8 @@ def def_datatype(dt_definition, _ctx=None):
 def load_module(module_def):
     if isinstance(module_def, dict):
         return _Module.from_dict(module_def)
+    elif isinstance(module_def, str):
+        return _Module.from_file(module_def)
 
 
 def fulfill(value, datatype):

@@ -2,7 +2,7 @@ import re
 
 
 class LengthValidationMixin(object):
-    msg_length = "{value} lenght is not {option_value}"
+    msg_length = "{value} length is not {option_value}"
     msg_length_min = "{value} length is not at least {option_value}"
     msg_length_max = "{value} length is greater then {option_value}"
 

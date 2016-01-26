@@ -15,7 +15,8 @@ def create_action_fn(name, action_def, dt_ctx, request_cls=None):
 
     def action_fn(*args, **kwargs):
         barguments = action_signature.bind(*args, **kwargs)
-        print(barguments)
+        if request_cls is not None:
+            return request_cls.process_response(request_cls.make_request(barguments))
 
     action_fn.__signature__ = action_signature
     action_fn.__name__ = name

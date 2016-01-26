@@ -40,7 +40,7 @@ def _email_regex():
     DOMAIN = r'(?:' + DOT_ATOM + r'|' + \
         DOMAIN_LITERAL + r')'                       # see 3.4.1
     ADDR_SPEC = LOCAL_PART + r'@' + DOMAIN               # see 3.4.1
-    VALID_ADDRESS_REGEXP = re.compile('^' + ADDR_SPEC + '$')
+    VALID_ADDRESS_REGEXP = '^' + ADDR_SPEC + '$'
     return VALID_ADDRESS_REGEXP
 
 

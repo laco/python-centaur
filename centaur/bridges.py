@@ -29,6 +29,7 @@ class HTTPBridge(BaseBridge):
             kwargs = {}
             coro = self._app.lookup_fn_name(fn_name)
             accepted_parameters = coro.__code__.co_varnames[:coro.__code__.co_argcount]
+            print('aparam', accepted_parameters)
             for p in accepted_parameters:
                 if p in request.match_info:
                     kwargs[p] = request.match_info[p]
