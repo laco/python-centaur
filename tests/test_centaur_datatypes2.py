@@ -52,6 +52,17 @@ def test_integer_datatype_respect_floats():
         dt.guard(1.123, integer_dt) is False
 
 
+def test_boolean_datatype():
+    boolean_dt = dt.def_datatype({'type': 'boolean'})
+    true_boolean_dt = dt.def_datatype({'type': 'boolean', 'eq': True})
+
+    assert dt.fulfill(True, boolean_dt)
+    assert not dt.fulfill(None, boolean_dt)
+
+    assert dt.fulfill(True, true_boolean_dt)
+    assert not dt.fulfill(False, true_boolean_dt)
+
+
 def test_number_relations():
     greater_than_20 = dt.def_datatype({'type': 'number', 'gt': 20})
     less_than_20 = dt.def_datatype({'type': 'number', 'lt': 20})

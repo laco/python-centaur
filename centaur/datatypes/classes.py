@@ -70,6 +70,11 @@ class IntegerDataType(EnumValidationMixin, SortableValidationMixin, EqualityVali
         return (isinstance(value, int)) or (isinstance(value, float) and value.is_integer())
 
 
+class BooleanDataType(EqualityValidationMixin, _Datatype):
+    def validate_type(self, value):
+        return isinstance(value, bool)
+
+
 class ListDatatype(ItemsValidationMixin, ContainsValidationMixin, LengthValidationMixin, _Datatype):
     def validate_type(self, value):
         return isinstance(value, list)

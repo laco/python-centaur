@@ -1,7 +1,8 @@
 import yaml
 from .utils import without_items
 from .classes import StringDatatype, NumberDataType, IntegerDataType, DictDataType, \
-    ListDatatype, NoneDatatype, ExtendedDataType, UnionDatatype, MaybeDatatype
+    ListDatatype, NoneDatatype, ExtendedDataType, UnionDatatype, MaybeDatatype, \
+    BooleanDataType
 from .defaults import _create_default_ctx
 from collections import defaultdict
 
@@ -10,6 +11,7 @@ class _Types(object):
     string = 'string'
     number = 'number'
     integer = 'integer'
+    boolean = 'boolean'
 
     list = 'list'
     dict = 'dict'
@@ -18,7 +20,7 @@ class _Types(object):
     none = 'none'
 
 
-PRIMITIVE_TYPES = [_Types.string, _Types.none, _Types.number, _Types.integer]
+PRIMITIVE_TYPES = [_Types.string, _Types.none, _Types.number, _Types.integer, _Types.boolean]
 COMPOSITION_TYPES = [_Types.list, _Types.dict, _Types.union, _Types.maybe]
 
 
@@ -134,6 +136,7 @@ class _Context(YMLFileLoadMixin, object):
             _Types.integer: IntegerDataType,
             _Types.union: UnionDatatype,
             _Types.maybe: MaybeDatatype,
+            _Types.boolean: BooleanDataType,
         }
         try:
             return types_to_clss[type_]
