@@ -27,7 +27,7 @@ class HTTPBridge(BaseBridge):
 
         async def _handler(request):
             kwargs = await create_ctx_from_request(request)
-            coro = self._app.lookup_fn_name(fn_name)
+            coro = self._app.lookup_name(fn_name)
             print(select_params_for_fn(kwargs, coro))
             res = await self._app.f_(fn_name, **select_params_for_fn(kwargs, coro))
             return web.Response(text=str(res))  # content_type='text/html'

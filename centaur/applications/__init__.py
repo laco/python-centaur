@@ -9,7 +9,8 @@ class Adapter(object):
 
 
 class Application(object):
-    def __init__(self, adapters=None):
+    def __init__(self, config=None, adapters=None):
+        self.config = config or {}
         adapters = adapters or {}
         self.adapters = {aname: acls(self) for aname, acls in adapters.items()}
         self.event_loop = self._get_event_loop()

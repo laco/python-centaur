@@ -43,7 +43,7 @@ def test_application_call_adapter_method(sample_application):
 def test_application_with_two_adatpers():
     class S1(Adapter):
         async def fn_one(self, a):
-            return a * 2
+            return a * self.app.config.get('multiply_by', 2)
 
     class S2(Adapter):
         async def fn_two(self, b):
@@ -51,6 +51,9 @@ def test_application_with_two_adatpers():
 
     app = Application(adapters={'s1': S1, 's2': S2})
     assert app.event_loop.run_until_complete(app.f_('s2.fn_two', b=10)) == 20
+
+    app = Application(config={'multiply_by': 3}, adapters={'s1': S1, 's2': S2})
+    assert app.event_loop.run_until_complete(app.f_('s2.fn_two', b=10)) == 30
 
 
 def test_application_run_in_executor():
