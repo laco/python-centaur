@@ -1,5 +1,5 @@
-import functools
 import inspect
+from centaur.utils import wraps_w_signature
 
 from .defaults import _create_default_ctx
 from .classes import _Datatype
@@ -58,7 +58,7 @@ def validate_before_call(param, **kwargs):
         return validation_results
 
     def _decorator(fn):
-        @functools.wraps(fn)
+        @wraps_w_signature(fn)
         def wrapper(*args, **kwargs):
             _validate_fn_params_by_annotations(fn, *args, **kwargs)
             result = fn(*args, **kwargs)

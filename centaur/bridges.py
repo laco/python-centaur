@@ -1,5 +1,7 @@
 import asyncio
 from aiohttp import web
+from centaur.utils import select_params_for_fn
+from json import JSONDecodeError
 
 
 class BaseBridge(object):
@@ -22,22 +24,12 @@ class HTTPBridge(BaseBridge):
             self.add_route(*arg)
 
     def _http_handler_for(self, fn_name):
-        async def _request_data(request):
-            return await request.json()
 
         async def _handler(request):
-            kwargs = {}
+            kwargs = await create_ctx_from_request(request)
             coro = self._app.lookup_fn_name(fn_name)
-            accepted_parameters = coro.__code__.co_varnames[:coro.__code__.co_argcount]
-            print('aparam', accepted_parameters)
-            for p in accepted_parameters:
-                if p in request.match_info:
-                    kwargs[p] = request.match_info[p]
-
-            if '_data' in accepted_parameters:
-                kwargs['_data'] = await _request_data(request)
-            print('++++', accepted_parameters, kwargs)
-            res = await self._app.f_(fn_name, **kwargs)
+            print(select_params_for_fn(kwargs, coro))
+            res = await self._app.f_(fn_name, **select_params_for_fn(kwargs, coro))
             return web.Response(text=str(res))  # content_type='text/html'
         return _handler
 
@@ -57,6 +49,18 @@ class HTTPBridge(BaseBridge):
             loop.run_until_complete(srv.wait_closed())
             loop.run_until_complete(self._aiohttp_app.finish())
             loop.close()
+
+
+async def create_ctx_from_request(request):
+    async def _request_data(request):
+        try:
+            return await request.json()
+        except JSONDecodeError:
+            return None
+    ret = {}
+    ret.update(request.match_info)
+    ret['_data'] = await _request_data(request)
+    return ret
 
 
 class TESTBridge(BaseBridge):
