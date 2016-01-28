@@ -1,7 +1,6 @@
-import asyncio
+import json
 from aiohttp import web
 from centaur.utils import select_params_for_fn
-from json import JSONDecodeError
 
 
 class BaseBridge(object):
@@ -30,7 +29,7 @@ class HTTPBridge(BaseBridge):
             coro = self._app.lookup_name(fn_name)
             print(select_params_for_fn(kwargs, coro))
             res = await self._app.f_(fn_name, **select_params_for_fn(kwargs, coro))
-            return web.Response(text=str(res))  # content_type='text/html'
+            return web.Response(text=json.dumps(res), content_type='application/json')
         return _handler
 
     def run_server(self, host="0.0.0.0", port=8888):
@@ -55,7 +54,7 @@ async def create_ctx_from_request(request):
     async def _request_data(request):
         try:
             return await request.json()
-        except JSONDecodeError:
+        except json.JSONDecodeError:
             return None
     ret = {}
     ret.update(request.match_info)

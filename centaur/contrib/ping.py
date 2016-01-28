@@ -1,12 +1,12 @@
 import centaur
 from datetime import datetime
 
-ping_spec = centaur.describe_port(
-    ('ping', []))
+# ping_spec = centaur.describe_port(
+#     ('ping', []))
 
 
 class PingAdapter(centaur.Adapter):
-    __port__ = ping_spec
+    # __port__ = ping_spec
 
     async def ping(self):
         print("in ping")

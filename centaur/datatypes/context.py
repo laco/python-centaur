@@ -119,7 +119,7 @@ class _Context(YMLFileLoadMixin, object):
             if splitted_key[0] in self.linked_ctxs:
                 return self.linked_ctxs[splitted_key[0]][splitted_key[1]]
             else:  # noqa
-                raise ValueError("Unknown prefix: {} for datatype {}".format(*splitted_key))  # noqa
+                raise ValueError("Unknown prefix: {} for datatype {}".format(*splitted_key))
 
     def cls_for_type(self, type_):
         types_to_clss = {

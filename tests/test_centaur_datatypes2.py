@@ -245,8 +245,12 @@ def test_load_module():
     assert dt.fulfill('https://example.com/', m['centaur:url'])
     assert dt.fulfill(str(datetime.date.today()), m['centaur:date'])
     # assert dt.fulfill(str(datetime.datetime.now()), m['centaur:datetime'])  # FIXME
-    for m, d in m.items():
-        assert m in ['sampleID', 'sampleEmail']
+    for x, d in m.items():
+        assert x in ['sampleID', 'sampleEmail']
+        assert isinstance(d, dt._Datatype)
+
+    for x, d in m.ctx.items():
+        assert x in ['sampleID', 'sampleEmail']
         assert isinstance(d, dt._Datatype)
 
 
