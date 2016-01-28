@@ -244,7 +244,7 @@ def test_link_ctx():
     dts2.link_ctx(dts1, prefix='dts1')
 
     assert dt.fulfill('BCA', dts2['sample21'])
-    assert dt.fulfill('ABC', dts2['sample22'])
+    assert dt.guard('ABC', dts2['sample22'])
 
 
 def test_load_module():
@@ -269,3 +269,19 @@ def test_guard_throw_exception():
     assert dt.guard({'email': 'test@example.com', 'pw': '', 'tags': ['a']}, user_dt)
     with pytest.raises(dt.ValidationError):
         dt.guard({'email': 'xxxxx'}, user_dt)
+
+
+def test_guard_with_custom_exception_template():
+    book_dt = dt.def_datatype({
+        'type': 'dict',
+        'fields': {
+            'author': {'type': 'string', 'length_min': 5, 'name': 'author'},
+            'title': {'type': 'string'},
+        }
+        })
+    book_dt._ctx.error_templates['length_min'] = 'The string is two small: {value}'
+    assert dt.guard({'author': 'John Doe', 'title': 'The Great Title of the book'}, book_dt)
+    try:
+        assert dt.guard({'author': 'sm', 'title': 'The Great Title of the book'}, book_dt)
+    except dt.ValidationError as e:
+        assert str(e) == 'The string is two small: \'sm\''

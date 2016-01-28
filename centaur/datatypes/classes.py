@@ -19,7 +19,7 @@ class _Datatype(object):
 
     def get_exception_msg(self, option_name, option_value, value):
         if option_name in self._ctx.error_templates:
-            template = self.ctx.error_templates[option_name]
+            template = self._ctx.error_templates[option_name]
         elif hasattr(self, 'msg_' + option_name):
             template = getattr(self, 'msg_' + option_name)
         else:
