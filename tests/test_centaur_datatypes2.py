@@ -100,13 +100,16 @@ def test_dict_datatype_simple():
 def test_list_and_dict_composition_definition():
     user_dt = dt.def_datatype({
         'type': 'dict',
+        'required': ['email', 'pw'],
         'fields': {
-            'email': {'type': 'string', 'length_min': 10},
-            'pw': {'type': 'string'},
-            'tags': {'type': 'list', 'items': {'type': 'string'}}
+            'email': {'type': 'string', 'length_min': 10, 'contains': '@'},
+            'pw': {'type': 'string', 'contains': '1', 'not_contains': '123', 'not_in': ['123456']},
+            'tags': {'type': 'list', 'items': {'type': 'string', 'in': ['A', 'B', 'C']}}
         }})
 
-    assert dt.fulfill({'email': 'test@example.com', 'pw': '', 'tags': ['a']}, user_dt)
+    assert dt.fulfill({'email': 'test@example.com', 'pw': 'xxx321', 'tags': ['A']}, user_dt)
+    assert not dt.fulfill({'pw': '123456', 'email': 'test@example.com'}, user_dt)
+    assert not dt.fulfill({'pw': '321'}, user_dt)
 
 
 def test_extended_datatype_definition():
@@ -142,19 +145,32 @@ def test_list_item_validation():
 
     assert dt.fulfill([0, 1, 2, 3], integer_list)
     assert dt.fulfill([], integer_list)
-    # with pytest.raises(TypeMismatchError):
-    #     fulfill(["a", "b", "c"], integer_list)
+    assert not dt.fulfill(["a", "b", "c"], integer_list)
 
     assert dt.fulfill([97, 98, 99], lt100_integer_list)
-    # with pytest.raises(InvalidValueError):
-    #     fulfill([99, 100, 101], lt100_integer_list)
+    assert not dt.fulfill([99, 100, 101], lt100_integer_list)
+
+
+def test_list_relations():
+    one_long_list = dt.def_datatype({'type': 'list', 'length': 1})
+    zero_long_list = dt.def_datatype({'type': 'list', 'length_min': 0, 'length_max': 0})
+
+    assert dt.fulfill([0], one_long_list)
+    assert dt.fulfill([[]], one_long_list)
+    assert dt.fulfill([], zero_long_list)
+
+    for l in [[], [0, 1], [[], []]]:
+        with pytest.raises(dt.ValidationError):
+            dt.guard(l, one_long_list)
+    for l in [[0, 1], [[], []], [[]]]:
+        with pytest.raises(dt.ValidationError):
+            dt.guard(l, zero_long_list)
 
 
 def test_string_regex():
     url_dt = dt.def_datatype({'type': 'string', 'regex': url_regex})
     assert dt.fulfill("https://example.com", url_dt)
-    # with pytest.raises(InvalidValueError):
-    #     fulfill("ftp://example.com", url_dt)
+    assert not dt.fulfill("ftp://example.com", url_dt)
 
 
 def test_enums_and_contains():
@@ -174,8 +190,7 @@ def test_maybe_datatypes():
         {'type': 'maybe', 'base': {'type': 'string', 'regex': url_regex}})
     assert dt.fulfill(None, maybe_url_dt)
     assert dt.fulfill('http://example.com/', maybe_url_dt)
-    # with pytest.raises(InvalidValueError):
-    #     fulfill('xxxsd jdfhgdfhg ', maybe_url_dt)
+    assert not dt.fulfill('xxxsd jdfhgdfhg ', maybe_url_dt)
 
 
 def test_union_datatypes_integer_or_string():
@@ -189,14 +204,9 @@ def test_union_datatypes_integer_or_string():
     assert dt.fulfill(4, union_dt)
     assert dt.fulfill('aaa', union_dt)
 
-    # with pytest.raises(TypeMismatchError):
-    #     fulfill(['list', 'is', 'not', 'ok'], union_dt)
-
-    # with pytest.raises(InvalidValueError):
-    #     fulfill(3, union_dt)
-
-    # with pytest.raises(InvalidValueError):
-    #     fulfill('aa', union_dt)
+    assert not dt.fulfill(['list', 'is', 'not', 'ok'], union_dt)
+    assert not dt.fulfill(3, union_dt)
+    assert not dt.fulfill('aa', union_dt)
 
 
 sample_module_def = {
@@ -257,8 +267,5 @@ def test_guard_throw_exception():
         }})
 
     assert dt.guard({'email': 'test@example.com', 'pw': '', 'tags': ['a']}, user_dt)
-    # with pytest.raises(dt.ValidationError):
-    try:
+    with pytest.raises(dt.ValidationError):
         dt.guard({'email': 'xxxxx'}, user_dt)
-    except Exception as e:
-        print(e)
