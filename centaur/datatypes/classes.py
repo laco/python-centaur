@@ -1,7 +1,7 @@
 from .mixins import EnumValidationMixin, ContainsValidationMixin, LengthValidationMixin,\
     EqualityValidationMixin, RegexValidationMixin, SortableValidationMixin, ItemsValidationMixin,\
     FieldsValidationMixin
-from .utils import without_items, deep_merge
+from centaur.utils import without_items, deep_merge
 from .exceptions import ValidationError
 
 

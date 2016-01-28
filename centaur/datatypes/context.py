@@ -1,5 +1,5 @@
 import yaml
-from .utils import without_items
+from centaur.utils import without_items
 from .classes import StringDatatype, NumberDataType, IntegerDataType, DictDataType, \
     ListDatatype, NoneDatatype, ExtendedDataType, UnionDatatype, MaybeDatatype, \
     BooleanDataType
@@ -104,11 +104,6 @@ class _Context(YMLFileLoadMixin, object):
         self._datatypes[name] = datatype
         return datatype
 
-    def def_extended_datatype(self, dt_definition, name=None):
-        type_ = dt_definition.get('type')
-        if type_ in self._datatypes:
-            return
-
     def link_ctx(self, ctx, prefix):
         self.linked_ctxs[prefix] = ctx
         return self
@@ -123,8 +118,8 @@ class _Context(YMLFileLoadMixin, object):
         elif len(splitted_key) == 2:
             if splitted_key[0] in self.linked_ctxs:
                 return self.linked_ctxs[splitted_key[0]][splitted_key[1]]
-            else:
-                raise ValueError("Unknown prefix: {} for datatype {}".format(*splitted_key))
+            else:  # noqa
+                raise ValueError("Unknown prefix: {} for datatype {}".format(*splitted_key))  # noqa
 
     def cls_for_type(self, type_):
         types_to_clss = {

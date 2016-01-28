@@ -1,4 +1,5 @@
-from centaur.datatypes import ValidationError, validate_before_call, def_datatypes, select_items
+from centaur.datatypes import ValidationError, validate_before_call, def_datatypes
+from centaur.utils import select_items
 import pytest
 
 

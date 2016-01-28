@@ -2,6 +2,8 @@ import pytest
 import os
 import datetime
 from centaur import datatypes as dt
+from centaur.utils import select_items
+
 
 url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 number_dt = dt.def_datatype({'type': 'number'})
@@ -9,20 +11,8 @@ integer_dt = dt.def_datatype({'type': 'integer'})
 sample_service_yml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_service.yml")
 
 
-def test_without_items_fn():
-    a = {'a': 'a', 'b': 'b', 'c': 'c'}
-    assert dt.without_items(a, ['a']) == {'b': 'b', 'c': 'c'}
-    assert dt.without_items(a, ['a', 'b']) == {'c': 'c'}
-
-
-def test_select_items_fn():
-    a = {'a': 'a', 'b': 'b', 'c': 'c'}
-    assert dt.with_items(a, ['a']) == {'a': 'a'}
-    assert dt.with_items(a, ['a', 'b']) == {'a': 'a', 'b': 'b'}
-
-
 def test_simple_datatype_definition():
-    string_dt = dt.def_datatype({'type': 'string', 'length': 4})
+    string_dt = dt.def_datatype({'type': 'string', 'length': 4, 'name': 'string_dt'})
     list_dt = dt.def_datatype({'type': 'list', 'length_min': 1, 'length_max': 2})
     none_dt = dt.def_datatype({'type': 'none'})
 
@@ -179,7 +169,7 @@ def test_enums_and_contains():
         'enum2': {'type': 'number', 'enum': [0, 1.1, 1.2]},
         'enum3': {'type': 'string', 'in': ['AA', 'BB', 'CC'], 'contains': 'A'}
         })
-    enum1, enum2, enum3 = dt.select_items(dts, ['enum1', 'enum2', 'enum3'])
+    enum1, enum2, enum3 = select_items(dts, ['enum1', 'enum2', 'enum3'])
     assert dt.fulfill('A', enum1)
     assert dt.fulfill(1.2, enum2)
     assert dt.fulfill('AA', enum3)
@@ -255,6 +245,9 @@ def test_load_module():
     assert dt.fulfill('https://example.com/', m['centaur:url'])
     assert dt.fulfill(str(datetime.date.today()), m['centaur:date'])
     # assert dt.fulfill(str(datetime.datetime.now()), m['centaur:datetime'])  # FIXME
+    for m, d in m.items():
+        assert m in ['sampleID', 'sampleEmail']
+        assert isinstance(d, dt._Datatype)
 
 
 def test_guard_throw_exception():

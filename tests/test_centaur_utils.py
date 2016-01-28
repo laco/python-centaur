@@ -1,4 +1,4 @@
-from centaur.utils import wraps_w_signature, call_in_ctx, select_params_for_fn
+from centaur.utils import wraps_w_signature, call_in_ctx, select_params_for_fn, without_items, with_items, deep_merge
 from inspect import signature, Signature, Parameter
 
 
@@ -31,3 +31,23 @@ def test_call_function_from_ctx():
     }
     assert select_params_for_fn(sample_ctx, sample_fn) == {'a': 10, 'b': 20, 'c': 30}
     assert call_in_ctx(sample_ctx, sample_fn) == (10, 20, 30)
+
+
+def test_without_items_fn():
+    a = {'a': 'a', 'b': 'b', 'c': 'c'}
+    assert without_items(a, ['a']) == {'b': 'b', 'c': 'c'}
+    assert without_items(a, ['a', 'b']) == {'c': 'c'}
+
+
+def test_select_items_fn():
+    a = {'a': 'a', 'b': 'b', 'c': 'c'}
+    assert with_items(a, ['a']) == {'a': 'a'}
+    assert with_items(a, ['a', 'b']) == {'a': 'a', 'b': 'b'}
+
+
+def test_deep_merge():
+    a = {'a': 'a', 'b': 'b', 'c': {'D': 'D'}}
+    b = {'a': 'a', 'b': 'b', 'c': {'E': 'E'}}
+
+    m = deep_merge(a, b)
+    assert m['c'] == {'D': 'D', 'E': 'E'}

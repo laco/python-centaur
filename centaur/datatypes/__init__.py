@@ -1,7 +1,7 @@
 from .context import _Context, _Module
-from .utils import select_items, with_items, without_items
 from .decorators import validate_before_call
 from .exceptions import ValidationError
+from .classes import _Datatype
 
 
 def def_datatypes(dt_definitions, _ctx=None):
@@ -31,8 +31,7 @@ def guard(value, datatype):
 
 
 __all__ = ['def_datatypes', 'def_datatype', 'load_module', 'fulfill', 'guard',
-           'select_items', 'with_items', 'without_items',
-           '_Context', '_Module',
+           '_Context', '_Module', '_Datatype',
            'validate_before_call',
            'ValidationError',
            ]
