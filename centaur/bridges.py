@@ -1,3 +1,5 @@
+import datetime
+import decimal
 import json
 from aiohttp import web
 from centaur.utils import select_params_for_fn
@@ -29,7 +31,7 @@ class HTTPBridge(BaseBridge):
             coro = self._app.lookup_name(fn_name)
             print(select_params_for_fn(kwargs, coro))
             res = await self._app.f_(fn_name, **select_params_for_fn(kwargs, coro))
-            return web.Response(text=json.dumps(res), content_type='application/json')
+            return web.Response(text=to_json(res), content_type='application/json')
         return _handler
 
     def run_server(self, host="0.0.0.0", port=8888):
@@ -67,3 +69,47 @@ class TESTBridge(BaseBridge):
     def f_(self, fn_name, **kwargs):
         return self._app.event_loop.run_until_complete(
             self._app.f_(fn_name, **kwargs))
+
+
+try:
+    from bson import ObjectId
+except ImportError:
+    ObjectId = None
+
+try:
+    from delorean import Delorean
+except ImportError:
+    Delorean = None
+
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
+
+class EnhancedEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime.datetime, datetime.date)):
+            return obj.isoformat()
+        elif (ObjectId is not None) and isinstance(obj, ObjectId):
+            return str(obj)
+        elif (Delorean is not None) and isinstance(obj, Delorean):
+            return obj.datetime.isoformat()
+        elif isinstance(obj, decimal.Decimal):
+            return float(str(obj))
+        elif (np is not None) and hasattr(obj, "dtype") and 'numpy' in str(type(obj)):
+            try:
+                return np.asscalar(obj)
+            except:  # Exception as e:
+                pass  # print(e)
+            try:
+                npn = obj(0)
+                return npn.item()
+            except:  # Exception as e:
+                pass  # print(e)
+        else:
+            return super(EnhancedEncoder, self).default(obj)
+
+
+def to_json(data, ensure_ascii=True):
+    return json.dumps(data, cls=EnhancedEncoder, ensure_ascii=ensure_ascii)
