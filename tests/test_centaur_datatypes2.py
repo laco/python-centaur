@@ -282,3 +282,8 @@ def test_guard_with_custom_exception_template():
         assert dt.guard({'author': 'sm', 'title': 'The Great Title of the book'}, book_dt)
     except dt.ValidationError as e:
         assert str(e) == 'The string is two small: \'sm\''
+
+
+def test_load_module_from_file():
+    module_ = dt.load_module(sample_service_yml_file)
+    assert module_ is not None
