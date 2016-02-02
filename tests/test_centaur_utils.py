@@ -1,4 +1,4 @@
-from centaur.utils import wraps_w_signature, call_in_ctx, select_params_for_fn, without_items, with_items, deep_merge, IDGenerator
+from centaur.utils import wraps_w_signature, call_in_ctx, select_params_for_fn, without_items, with_items, deep_merge, IDGenerator, fill_defaults
 from inspect import signature, Signature, Parameter
 
 
@@ -57,3 +57,11 @@ def test_id_generator():
     g = IDGenerator()
     assert g.generate_id('sample') == 'sample0'
     assert g.generate_id('sample') == 'sample1'
+
+
+def test_fill_defaults():
+    data = {'a': 1, 'b': 2, 'c': None}
+    data_defaults = {'b': 0, 'c': 3, 'd': -1}
+
+    assert fill_defaults(data, data_defaults) == {'a': 1, 'b': 2, 'c': 3, 'd': -1}
+    assert fill_defaults(data, data_defaults, keep_nones=True) == {'a': 1, 'b': 2, 'c': None, 'd': -1}

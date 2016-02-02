@@ -69,3 +69,25 @@ class IDGenerator(object):
         if prefix not in self.generators:
             self.generators[prefix] = self.create_fn(prefix)
         return self.generators[prefix]()
+
+
+def fill_defaults(dict_, defaults, keep_nones=False):
+    def _iter_keys_once(dicts):
+        _yielded = []
+        for d in dicts:
+            for k in d.keys():
+                if k not in _yielded:
+                    _yielded.append(k)
+                    yield k
+
+    def _test_key_in_dict_and_not_none(dict_, key):
+        return key in dict_ and dict_[key] is not None
+
+    def _test_key_in_dict_allow_none(dict_, key):
+        return key in dict_
+
+    def _fill_defaults(dict_, defaults, _key_present_predicate):
+        return {k: dict_[k] if _key_present_predicate(dict_, k) else defaults[k] for k in _iter_keys_once([dict_, defaults])}
+
+    predicate_ = _test_key_in_dict_allow_none if keep_nones else _test_key_in_dict_and_not_none
+    return _fill_defaults(dict_, defaults, _key_present_predicate=predicate_)
