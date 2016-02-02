@@ -1,10 +1,9 @@
 import yaml
-from centaur.utils import without_items
+from centaur.utils import without_items, IDGenerator
 from .classes import StringDatatype, NumberDataType, IntegerDataType, DictDataType, \
     ListDatatype, NoneDatatype, ExtendedDataType, UnionDatatype, MaybeDatatype, \
     BooleanDataType
 from .defaults import _create_default_ctx
-from collections import defaultdict
 
 
 class _Types(object):
@@ -42,7 +41,7 @@ class _Context(YMLFileLoadMixin, object):
     def __init__(self):
         self._datatypes = {}
         self.linked_ctxs = {}
-        self._type_counter = defaultdict(int)
+        self.id_generator = IDGenerator()
         self.error_templates = {}
 
     @classmethod
@@ -92,13 +91,8 @@ class _Context(YMLFileLoadMixin, object):
         return self.add_datatype(name, datatype)
 
     def _gen_dt_name(self, dt_definition):
-        if 'name' in dt_definition:
-            return dt_definition['name']
-        else:
-            type_ = dt_definition.get('type')
-            typecounter = self._type_counter[type_]
-            self._type_counter[type_] = typecounter + 1
-            return '{}{}'.format(type_, typecounter)
+        return dt_definition['name'] if 'name' in dt_definition else \
+            self.id_generator.generate_id(dt_definition.get('type'))
 
     def add_datatype(self, name, datatype):
         self._datatypes[name] = datatype

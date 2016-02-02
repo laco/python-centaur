@@ -3,17 +3,17 @@ from inspect import signature
 from copy import deepcopy
 
 
-def centaur_update_wrapper(wrapper, wrapped, assigned, updated):
-    w = update_wrapper(wrapper, wrapped, assigned, updated)
-    w.__signature__ = signature(wrapped)
-    return w
-
-
 def wraps_w_signature(wrapped,
                       assigned=WRAPPER_ASSIGNMENTS,
                       updated=WRAPPER_UPDATES):
     "A version of @wraps decorator witch keeps the function signature."
-    return partial(centaur_update_wrapper, wrapped=wrapped,
+
+    def _centaur_update_wrapper(wrapper, wrapped, assigned, updated):
+        w = update_wrapper(wrapper, wrapped, assigned, updated)
+        w.__signature__ = signature(wrapped)
+        return w
+
+    return partial(_centaur_update_wrapper, wrapped=wrapped,
                    assigned=assigned, updated=updated)
 
 
@@ -46,3 +46,26 @@ def deep_merge(d1, d2):
         else:
             ret[k] = deepcopy(v)
     return ret
+
+
+def create_ids(prefix, counter=0):
+    counter_ = counter
+    prefix_ = prefix
+
+    def generate_id():
+        nonlocal counter_
+        ret = "{prefix}{counter}".format(prefix=prefix_, counter=counter_)
+        counter_ += 1
+        return ret
+    return generate_id
+
+
+class IDGenerator(object):
+    def __init__(self, create_fn=create_ids):
+        self.generators = {}
+        self.create_fn = create_fn
+
+    def generate_id(self, prefix):
+        if prefix not in self.generators:
+            self.generators[prefix] = self.create_fn(prefix)
+        return self.generators[prefix]()

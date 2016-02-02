@@ -1,4 +1,4 @@
-from centaur.utils import wraps_w_signature, call_in_ctx, select_params_for_fn, without_items, with_items, deep_merge
+from centaur.utils import wraps_w_signature, call_in_ctx, select_params_for_fn, without_items, with_items, deep_merge, IDGenerator
 from inspect import signature, Signature, Parameter
 
 
@@ -51,3 +51,9 @@ def test_deep_merge():
 
     m = deep_merge(a, b)
     assert m['c'] == {'D': 'D', 'E': 'E'}
+
+
+def test_id_generator():
+    g = IDGenerator()
+    assert g.generate_id('sample') == 'sample0'
+    assert g.generate_id('sample') == 'sample1'

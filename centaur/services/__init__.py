@@ -1,6 +1,6 @@
 from centaur.datatypes.context import _Module
 from inspect import Signature, Parameter
-from centaur.datatypes import validate_before_call
+from centaur.datatypes import validate_args
 
 
 def load_service(d):
@@ -20,7 +20,7 @@ def create_action_fn(name, action_def, dt_ctx, request_cls=None):
 
     action_fn.__signature__ = action_signature
     action_fn.__name__ = name
-    return validate_before_call(dt_ctx)(action_fn)
+    return validate_args(action_fn, ctx=dt_ctx)
 
 
 def _param_signature_for_action_def(action_def, dt_ctx=None):

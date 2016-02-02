@@ -1,13 +1,8 @@
 import inspect
 from centaur.utils import wraps_w_signature
 
-from .defaults import _create_default_ctx
-from .classes import _Datatype
-from .context import _Module, _Context
 
-
-def validate_before_call(param, **kwargs):
-    _ctx, _kwargs = _create_default_ctx(), {}
+def validate_args_with_ctx(ctx=None, **kwargs):
 
     def _add_default_param_values(ba, sig):
         for param in sig.parameters.values():
@@ -21,32 +16,41 @@ def validate_before_call(param, **kwargs):
     def _param_is_not_default(p, ba):
         return ba.arguments[p.name] != p.default
 
-    def _datatype_from_annotation(p):
-        if isinstance(p.annotation, _Datatype):
-            return p.annotation
-        elif isinstance(p.annotation, dict):
-            return _ctx.def_datatype(p.annotation)
-        else:
-            return _ctx[p.annotation]
+    def _construct_ctx(ctx):
+        from .defaults import _create_default_ctx
+        from .context import _Module, _Context
 
-    def _datatype_from_kwargs(p):
-        if isinstance(_kwargs[p], _Datatype):
-            return _kwargs[p]
-        elif isinstance(_kwargs[p], dict):
-            return _ctx.def_datatype(_kwargs[p])
+        if isinstance(ctx, _Module):
+            _ctx = ctx.ctx
+        elif isinstance(ctx, _Context):
+            _ctx = ctx
+        elif ctx is None:
+            _ctx = _create_default_ctx()
         else:
-            return _ctx[_kwargs[p]]
+            raise ValueError("Unknown ctx" + ctx)  # noqa
+        return _ctx
+
+    def _construct_datatype(dt_):
+        from .classes import _Datatype
+
+        if isinstance(dt_, _Datatype):
+            return dt_
+        elif isinstance(dt_, dict):
+            return _ctx.def_datatype(dt_)
+        else:
+            return _ctx[dt_]
 
     def _not_default_params_with_validation(sig, ba):
         for param in sig.parameters.values():
-            if _param_is_not_empty(param) and _param_is_not_default(param, ba):
-                dt_from_annotation = _datatype_from_annotation(param)
-                if dt_from_annotation is not None:
-                    yield param, dt_from_annotation
-            elif param in _kwargs and _param_is_not_default(param, ba):
-                dt_from_kwargs = _datatype_from_kwargs(param)
-                if dt_from_kwargs is not None:
-                    yield param, dt_from_kwargs
+            if _param_is_not_default(param, ba):
+                if _param_is_not_empty(param):
+                    dt_from_annotation = _construct_datatype(param.annotation)
+                    if dt_from_annotation is not None:
+                        yield param, dt_from_annotation
+                elif param.name in kwargs:
+                    dt_from_kwargs = _construct_datatype(kwargs[param.name])
+                    if dt_from_kwargs is not None:
+                        yield param, dt_from_kwargs
 
     def _validate_fn_params_by_annotations(fn, *args, **kwargs):
         sig = inspect.signature(fn)
@@ -64,11 +68,15 @@ def validate_before_call(param, **kwargs):
             result = fn(*args, **kwargs)
             return result
         return wrapper
-    if callable(param):
-        return _decorator(param)
-    else:
-        if isinstance(param, _Module):
-            _ctx, _kwargs = param.ctx, kwargs  # noqa
-        elif isinstance(param, _Context):
-            _ctx, _kwargs = param, kwargs
+
+    _ctx = _construct_ctx(ctx)
+    return _decorator
+
+
+def validate_args(fn=None, **kwargs):
+    ctx = kwargs.pop('ctx', None)
+    _decorator = validate_args_with_ctx(ctx=ctx, **kwargs)
+    if fn is None:
         return _decorator
+    else:
+        return _decorator(fn)

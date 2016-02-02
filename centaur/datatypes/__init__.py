@@ -1,5 +1,5 @@
 from .context import _Context, _Module
-from .decorators import validate_before_call
+from .decorators import validate_args, validate_args_with_ctx
 from .exceptions import ValidationError
 from .classes import _Datatype
 
@@ -32,6 +32,6 @@ def guard(value, datatype):
 
 __all__ = ['def_datatypes', 'def_datatype', 'load_module', 'fulfill', 'guard',
            '_Context', '_Module', '_Datatype',
-           'validate_before_call',
+           'validate_args', 'validate_args_with_ctx',
            'ValidationError',
            ]
