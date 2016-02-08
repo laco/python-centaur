@@ -15,3 +15,4 @@ def test_curry_functions():
     assert add_1(1) == 2
     assert add_2(1) == 3
     assert add_b(1) == 5
+    assert sample_add(1)(1) == 2
