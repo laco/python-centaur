@@ -1,5 +1,8 @@
 import centaur
-from nimoy.connection import DatabaseConnection
+from centaur.safe_import import safe_import
+
+
+DatabaseConnection = safe_import('nimoy.connection', 'DatabaseConnection', msg='Plz. install nimoy package for this Adapter')
 
 
 class NimoyAdapter(centaur.Adapter):
