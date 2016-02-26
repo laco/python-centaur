@@ -72,7 +72,7 @@ class NimoySchemaSwitchManager(object):  # noqa
         self.schema_name = schema_name
 
     def load_from_database(self):
-        return {s: Switch.from_dict(self.state[s]) for s in self._db_get_items()}
+        return {s['name']: Switch.from_dict(s) for s in self._db_get_items()}
 
     def _db_get_items(self):
         return self.db_conn.scan(self.schema_name, _w=None, limit=9999)
