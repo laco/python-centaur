@@ -117,3 +117,13 @@ def test_as_predicate():
          ('lte', 'value', 20))).as_predicate()
 
     assert predicate({'value': 20}) is True
+
+
+def test_parse_wt_raise_exception_on_invalid_keyword():
+    with pytest.raises(TypeError):
+        parse_wt(('invalidke', 'Aaa', 'bbb'))
+
+
+def test_parse_wt_raise_exception_on_missing_arguments():
+    with pytest.raises(TypeError):
+        parse_wt(('eq',))

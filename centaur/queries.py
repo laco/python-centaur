@@ -165,3 +165,4 @@ def parse_wt(wt):
         return _primitive_queries[wt[0]](*wt[1:])
     elif wt[0] in _composite_queries:
         return _composite_queries[wt[0]](*[parse_wt(swt) for swt in wt[1:]])
+    raise TypeError("Invalid query definition {}".format(repr(wt)))
