@@ -5,7 +5,11 @@ logger = logging.getLogger(__name__)
 
 
 class WQuery(object):
-    pass
+    def check(self, value):  # noqa
+        return False
+
+    def as_predicate(self):
+        return self.check
 
 
 class PrimitiveWQuery(WQuery):
@@ -119,6 +123,11 @@ class WEndswith(PrimitiveWQuery):
         return self.select(value).endswith(self.argument)
 
 
+class WIs(PrimitiveWQuery):
+    _operator = operator.is_
+    _tag = 'is'
+
+
 class WAnd(CompositeWQuery):
     _tag = 'and'
 
@@ -142,7 +151,9 @@ class WOr(CompositeWQuery):
 
 _primitive_queries = {cls._tag: cls for cls in [
     WEq, WNeq, WLt, WGt, WLte, WGte,
-    WIn, WNin, WContains, WNContains, WStartswith, WEndswith]}
+    WIn, WNin, WContains, WNContains, WStartswith, WEndswith,
+    WIs,
+]}
 
 _composite_queries = {cls._tag: cls for cls in [WAnd, WNot, WOr]}
 

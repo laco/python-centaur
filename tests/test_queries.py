@@ -46,6 +46,11 @@ from centaur.queries import parse_wt
         (('endswith', 'name', 'Example'), {'name': 'First Example'}, True),
         (('endswith', 'name', 'Example'), {'name': 'Second Example End'}, False),
 
+        (('is', 'required', True), {'required': False}, False),
+        (('is', 'required', True), {'required': 1}, False),
+        (('is', 'required', True), {'required': 'True'}, False),
+        (('is', 'required', True), {'required': True}, True),
+
     ])
 def test_parse_wt_simple(w, value, result):
     wq = parse_wt(w)
@@ -103,3 +108,12 @@ def test_empty_query():
     assert wq.check({}) is True
 
     assert repr(wq) == 'None'
+
+
+def test_as_predicate():
+    predicate = parse_wt(
+        ('and',
+         ('gt', 'value', 10),
+         ('lte', 'value', 20))).as_predicate()
+
+    assert predicate({'value': 20}) is True
