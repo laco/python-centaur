@@ -95,3 +95,11 @@ def test_query_repr():
   ('eq', 'name', 'Example2')),
  ('gt', 'age', 18))
 """.strip()
+
+
+def test_empty_query():
+    wq = parse_wt(None)
+    assert wq.check({'anything': 'is ok'}) is True
+    assert wq.check({}) is True
+
+    assert repr(wq) == 'None'

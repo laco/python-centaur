@@ -41,6 +41,14 @@ class CompositeWQuery(WQuery):
                           ',\n'.join([repr(s) for s in self.subqueries])))
 
 
+class WEmpty(WQuery):
+    def check(self, value):
+        return True
+
+    def __repr__(self):
+        return 'None'
+
+
 class WEq(PrimitiveWQuery):
     _operator = operator.eq
     _tag = 'eq'
@@ -132,24 +140,17 @@ class WOr(CompositeWQuery):
         return any([s.check(value) for s in self.subqueries])
 
 
-_primitive_queries = {
-    'eq': WEq, 'neq': WNeq,
-    'lt': WLt, 'gt': WGt,
-    'lte': WLte, 'gte': WGte,
-    'in': WIn, 'nin': WNin,
-    'contains': WContains, 'ncontains': WNContains,
-    'startswith': WStartswith, 'endswith': WEndswith,
-}
+_primitive_queries = {cls._tag: cls for cls in [
+    WEq, WNeq, WLt, WGt, WLte, WGte,
+    WIn, WNin, WContains, WNContains, WStartswith, WEndswith]}
 
-_composite_queries = {
-    'and': WAnd,
-    'not': WNot,
-    'or': WOr,
-}
+_composite_queries = {cls._tag: cls for cls in [WAnd, WNot, WOr]}
 
 
 def parse_wt(wt):
-    if wt[0] in _primitive_queries:
+    if wt is None:
+        return WEmpty()
+    elif wt[0] in _primitive_queries:
         return _primitive_queries[wt[0]](*wt[1:])
     elif wt[0] in _composite_queries:
         return _composite_queries[wt[0]](*[parse_wt(swt) for swt in wt[1:]])
