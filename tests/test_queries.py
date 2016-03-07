@@ -106,7 +106,6 @@ def test_empty_query():
     wq = parse_wt(None)
     assert wq.check({'anything': 'is ok'}) is True
     assert wq.check({}) is True
-
     assert repr(wq) == 'None'
 
 
@@ -127,3 +126,20 @@ def test_parse_wt_raise_exception_on_invalid_keyword():
 def test_parse_wt_raise_exception_on_missing_arguments():
     with pytest.raises(TypeError):
         parse_wt(('eq',))
+
+
+def test_to_list_is_parse_wt_compatible():
+    w = ('and',
+         ('in', 'value', ['AAA', 'BBB', 'CCC']),
+         ('eq', 'key', 'D'))
+    wq = parse_wt(w)
+    assert wq.to_list() == \
+        ['and',
+         ['in', 'value', ['AAA', 'BBB', 'CCC']],
+         ['eq', 'key', 'D']]
+    assert parse_wt(wq.to_list()) == wq
+
+
+def test_to_list_wempty_strage_cornercase():
+    assert parse_wt(None).to_list() is None
+    assert parse_wt(None) == parse_wt(None)

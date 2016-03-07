@@ -30,6 +30,15 @@ class PrimitiveWQuery(WQuery):
     def __repr__(self):
         return "('{}', '{}', {})".format(self._tag, self.selector, repr(self.argument))
 
+    def to_list(self):
+        return [self._tag, self.selector, self.argument]
+
+    def __eq__(self, other):
+        return all([
+            self._tag == other._tag,
+            self.selector == other.selector,
+            self.argument == other.argument])
+
 
 class CompositeWQuery(WQuery):
     def __init__(self, *subqueries):
@@ -44,6 +53,14 @@ class CompositeWQuery(WQuery):
             _space_indent(1,
                           ',\n'.join([repr(s) for s in self.subqueries])))
 
+    def to_list(self):
+        return [self._tag] + [s.to_list() for s in self.subqueries]
+
+    def __eq__(self, other):
+        return self._tag == other._tag and \
+            len(self.subqueries) == len(other.subqueries) and \
+            all([s == other.subqueries[i] for i, s in enumerate(self.subqueries)])
+
 
 class WEmpty(WQuery):
     def check(self, value):
@@ -51,6 +68,12 @@ class WEmpty(WQuery):
 
     def __repr__(self):
         return 'None'
+
+    def to_list(self):
+        return None
+
+    def __eq__(self, other):
+        return isinstance(other, WEmpty)
 
 
 class WEq(PrimitiveWQuery):
