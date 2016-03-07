@@ -1,3 +1,6 @@
+from centaur.queries import parse_wt
+
+
 class SwitchStates(object):
     GLOBAL_ENABLED = 'GLOBAL_ENABLED'
     GLOBAL_DISABLED = 'GLOBAL_DISABLED'
@@ -31,20 +34,24 @@ class Switch(object):
                  state=SwitchStates.GLOBAL_DISABLED,
                  owner=None,
                  expire_date=None,
-                 created_at=None, **kwargs):
+                 created_at=None, conditions=None):
         self.name = name
         self.description = description
         self.state = state
         self.owner = owner
         self.expire_date = expire_date
         self.created_at = created_at
-        self.conditions = kwargs
+        self.conditions = conditions
+        self._predicate = parse_wt(self.conditions).as_predicate() \
+            if conditions is not None else lambda value: False
 
     def is_enabled(self, *args, **kwargs):
         if self.state == SwitchStates.GLOBAL_ENABLED:
             return True
         elif self.state == SwitchStates.GLOBAL_DISABLED:
             return False
+        elif self.state == SwitchStates.SELECTIVE:
+            return self._predicate(kwargs)
 
     @classmethod
     def from_dict(cls, data):

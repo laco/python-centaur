@@ -36,3 +36,22 @@ def test_inmemory_persistent_switches():
     assert board.is_enabled('TEST1') is True
     assert 'TEST2' in manager.state
     assert manager.state['TEST2']['state'] == SwitchStates.GLOBAL_DISABLED
+
+
+def test_selective_switch_with_conditions():
+    board = SwitchBoard()
+    board.add_switch('TEST_SWITCH',
+                     state=SwitchStates.SELECTIVE,
+                     conditions=('in', 'ipaddress', ['127.0.0.1', '192.168.0.1']))
+    assert board.is_enabled('TEST_SWITCH') is False
+    assert board.is_enabled('TEST_SWITCH', ipaddress='127.0.0.1') is True
+    assert board.is_enabled('TEST_SWITCH', ipaddress='192.168.0.1') is True
+    assert board.is_enabled('TEST_SWITCH', ipaddress='8.8.4.4') is False
+
+
+def test_selective_switch_without_conditions_always_false():
+    board = SwitchBoard()
+    board.add_switch('TEST_SWITCH',
+                     state=SwitchStates.SELECTIVE)
+    assert board.is_enabled('TEST_SWITCH') is False
+    assert board.is_enabled('TEST_SWITCH', ipaddress='127.0.0.1') is False
