@@ -1,4 +1,14 @@
 site_name: Centaur
+site_description: Next Generation Framework for Microservices
+repo_url: https://github.com/laco/python-centaur/
+site_author: Laszlo Andrasi
+
 pages:
   - 'Introduction': 'index.md'
+  - 'Basics':
+      - 'Datatypes & Validation': 'datatypes.md'
+      - 'Queries': 'queries.md'
+      - 'Feature Switches': 'feature_switches.md'
+      - 'Applications': 'applications.md'
+      - 'Services': 'services.md'
 theme: readthedocs
