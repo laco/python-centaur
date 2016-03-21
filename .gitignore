@@ -59,3 +59,11 @@ docs/_build/
 target/
 # mkdocs documentation
 site/
+
+# emacs temp files
+*~
+\#*\#
+*.elc
+auto-save-list
+tramp
+.\#*
