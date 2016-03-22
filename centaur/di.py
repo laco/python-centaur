@@ -3,8 +3,11 @@
 def _depends_on_cls_factory(dependencies, BaseCls):
     def init(self, *args, **kwargs):
         _dependencies_dict = {}
-        for d in dependencies:
-            _dependencies_dict[d] = kwargs.pop(d)
+        try:
+            for d in dependencies:
+                _dependencies_dict[d] = kwargs.pop(d)
+        except KeyError as e:
+            raise TypeError("Missing dependency {}".format(str(e)))
         super(BaseCls, self).__init__(*args, **kwargs)
         for d, v in _dependencies_dict.items():
             setattr(self, d, v)
