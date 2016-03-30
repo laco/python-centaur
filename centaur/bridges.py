@@ -67,9 +67,17 @@ async def create_ctx_from_request(request):
             return None
     ret = {}
     ret.update(request.match_info)
+    for k, v in request.cookies.items():
+        print('from cookies', k, v)
+        ret[k] = v
+#    for k, v in request.headers.items():
+#        ret[k] = v
     ret['_data'] = await _request_data(request)
+
+    # special values
     ret['_request'] = request
     ret['_cookies'] = request.cookies
+    ret['_headers'] = request.headers
     return ret
 
 
