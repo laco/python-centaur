@@ -3,6 +3,7 @@ import decimal
 import json
 from aiohttp import web
 from centaur.utils import select_params_for_fn
+from centaur.datatypes import ValidationError
 
 
 class BaseBridge(object):
@@ -30,8 +31,14 @@ class HTTPBridge(BaseBridge):
             kwargs = await create_ctx_from_request(request)
             coro = self._app.lookup_name(fn_name)
             print(select_params_for_fn(kwargs, coro))
-            res = await self._app.f_(fn_name, **select_params_for_fn(kwargs, coro))
-            return web.Response(text=to_json(res), content_type='application/json')
+            try:
+                res = await self._app.f_(fn_name, **select_params_for_fn(kwargs, coro))
+                if not isinstance(res, web.Response):
+                    return web.Response(text=to_json(res), content_type='application/json')
+                else:
+                    return res
+            except ValidationError as res:
+                return web.Response(text=to_json({'error': str(res)}), content_type='application/json', status=400)
         return _handler
 
     def run_server(self, host="0.0.0.0", port=8888):
@@ -61,6 +68,8 @@ async def create_ctx_from_request(request):
     ret = {}
     ret.update(request.match_info)
     ret['_data'] = await _request_data(request)
+    ret['_request'] = request
+    ret['_cookies'] = request.cookies
     return ret
 
 
