@@ -14,4 +14,4 @@ class PingAdapter(centaur.Adapter):
 
     async def pong(self):
         print("in pong")
-        return await self._app.f_('ping.ping')
+        return await self.app.f_('ping.ping')
