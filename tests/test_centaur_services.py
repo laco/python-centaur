@@ -46,6 +46,13 @@ def test_shortcut_usage():
     assert response.text == 'OK'
 
 
+def test_not_existst_usage():
+    client = FakeHttpClient().add_response(request={'method': 'GET', 'url': '/sample/?id=12345'}, response={'text': 'OK'})
+    service = load_service(sample_service_def, client=client)
+    response = service.sample_action(id='12346')
+    assert response.text == 'OK'
+
+
 def test_def_service_returns_a_module():
     service = load_service(sample_service_def)
     assert isinstance(service, _Module)
