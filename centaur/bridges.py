@@ -3,7 +3,7 @@ import decimal
 import json
 from aiohttp import web
 from centaur.utils import select_params_for_fn
-from centaur.datatypes import ValidationError
+from centaur.datatypes import ValidationError, ItemNotFoundError
 
 
 class BaseBridge(object):
@@ -39,6 +39,8 @@ class HTTPBridge(BaseBridge):
                     return res
             except ValidationError as res:
                 return web.Response(text=to_json({'error': str(res)}), content_type='application/json', status=400)
+            except ItemNotFoundError as res:
+                return web.Response(text=to_json({'error': str(res)}), content_type='application/json', status=404)
         return _handler
 
     def run_server(self, host="0.0.0.0", port=8888):
